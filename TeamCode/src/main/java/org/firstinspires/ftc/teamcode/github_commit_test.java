@@ -6,4 +6,5 @@ public class github_commit_test {
     //hopefully this shows up
     //me when github
     //please
+    //new line
 }
