@@ -56,8 +56,7 @@ import java.util.concurrent.TimeUnit;
 
 @Autonomous(name="April Tag State Version 20251008", group = "Concept")
 
-public class StateVersionOfAprilTag3_new extends LinearOpMode
-{
+public class StateVersionOfAprilTag3_new extends LinearOpMode {
     // Adjustable robot setting.
     final double DESIRED_DISTANCE = 12.0; // how close the camera should get to 
     // the target (inches)
@@ -66,13 +65,13 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     //  correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, 
     //  or larger for a more aggressive response.
-    final double SPEED_GAIN  = 0.02;   // Forward Speed Control "Gain". e.g. 
+    final double SPEED_GAIN = 0.02;   // Forward Speed Control "Gain". e.g.
     // Ramp up to 50% power at a 25 inch error.
     // (0.50 / 25.0)
     final double STRAFE_GAIN = 0.015;  //  Strafe Speed Control "Gain".  e.g. 
     // Ramp up to 37% power at a 25 degree
     // Yaw error.   (0.375 / 25.0)
-    final double TURN_GAIN   = 0.01;   //  Turn Control "Gain".  e.g. Ramp up 
+    final double TURN_GAIN = 0.01;   //  Turn Control "Gain".  e.g. Ramp up
     //to 25% power at a 25 degree error.
     // (0.25 / 25.0)
 
@@ -98,16 +97,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     //detected AprilTag
 
 
-
-
     boolean targetFound = false;    // AprilTag target is detected
-    double drive  = 0;        // Desired forward power/speed (-1 to +1)
+    double drive = 0;        // Desired forward power/speed (-1 to +1)
     double strafe = 0;        // Desired strafe power/speed (-1 to +1)
-    double turn   = 0;        // Desired turning power/speed (-1 to +1)
+    double turn = 0;        // Desired turning power/speed (-1 to +1)
 
     // for move a distance
     final int DISTANCE = 2000; // number of clicks to move
-    final int VELOCITY =  600; // number of clicks per second
+    final int VELOCITY = 600; // number of clicks per second
     final double POWER = 0.5; // percent of full power
     IMU imu;
 
@@ -123,14 +120,15 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         STOP_ROBOT,
         TURN_ANGLE,
         BASIC_AUTO,
+        AUTO_ONE_BALL
     }
-
 
 
     // Initial state
     //movebaby myRobotState  = movebaby.MOVE_TO_APRIL;
-   // movebaby myRobotState  = movebaby.TURN_45;
-    movebaby myRobotState  = movebaby.STRAFE_USING_IMU;
+    // movebaby myRobotState  = movebaby.TURN_45;
+    movebaby myRobotState = movebaby.AUTO_ONE_BALL;
+
     //movebaby myRobotState  = movebaby.MOTOR_TEST;
     // movebaby myRobotState  = movebaby.MOTOR_TEST_BASIC;
     // movebaby myRobotState  = movebaby.MOTOR_TO_POSITION;
@@ -148,23 +146,23 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     //****** runOpMode ***********************************************************
     // Execution begines here
 
-    @Override public void runOpMode()
-    {
+    @Override
+    public void runOpMode() {
         // Initialize the Apriltag Detection process
 
         initAprilTag();
 
 
         // Map the configuration motor labels to code variables
-        leftFrontDrive  = hardwareMap.get(DcMotorEx.class, "frontLeftMotor");
+        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "frontLeftMotor");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "frontRightMotor");
-        leftBackDrive  = hardwareMap.get(DcMotorEx.class, "backLeftMotor");
+        leftBackDrive = hardwareMap.get(DcMotorEx.class, "backLeftMotor");
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "backRightMotor");
 
 
-        imu = hardwareMap.get(IMU.class,"imu");
+        imu = hardwareMap.get(IMU.class, "imu");
 
-        IMU.Parameters parameters= new IMU.Parameters(new RevHubOrientationOnRobot(
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
 
@@ -172,22 +170,19 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         imu.initialize(parameters);
 
 
-
-
-
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         switch (myBrand) {
             case GOBILDA:
-                telemetry.addData("GoBILDA frame","");
+                telemetry.addData("GoBILDA frame", "");
                 leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
                 leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
                 rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
                 rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
                 break;
             case REV:
-                telemetry.addData("REV frame","");
+                telemetry.addData("REV frame", "");
                 leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
                 leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
                 rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -244,8 +239,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
                 case MOTOR_TEST_BASIC:
                     testMotorsBasic(0.5);
                     break;
-                case STRAFE_USING_IMU:
-                    StrafeUsingImu(0.5);
+                case AUTO_ONE_BALL:
+                    autoOneBall(0.5);
                     break;
                 default:
                     shutDown();
@@ -257,8 +252,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     }
 
 
-
-
     //****** powerToPosition State **************************************************
     // Epp
     //
@@ -266,7 +259,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     // "0" position is redefined to current position
     // User power instead of speed
 
-    public void powerToPosition(int distance){
+    public void powerToPosition(int distance) {
 
         // The current position is set to zero
 
@@ -300,8 +293,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
 
         // Let the motors run until the preset count is reached
         while (opModeIsActive() && (leftFrontDrive.isBusy() ||
-                rightFrontDrive.isBusy()))
-        {
+                rightFrontDrive.isBusy())) {
             // Display position - can be removed
             telemetry.addData("  left  position ", leftFrontDrive.getCurrentPosition());
             telemetry.addData("  right position", rightFrontDrive.getCurrentPosition());
@@ -310,7 +302,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
             telemetry.update();
         }
 
-        myRobotState  = movebaby.STOP_ROBOT;
+        myRobotState = movebaby.STOP_ROBOT;
     }
 
     //****** motorToPosition State **************************************************
@@ -319,7 +311,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     // distance: number of clicks to move forward or backword
     // "0" position is redefined to current position
 
-    public void motorToPosition(int distance){
+    public void motorToPosition(int distance) {
 
         // The current position is set to zero
 
@@ -352,8 +344,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         rightBackDrive.setVelocity(VELOCITY);
 
         // Let the motors run until the preset count is reached
-        while (opModeIsActive() && leftFrontDrive.isBusy())
-        {
+        while (opModeIsActive() && leftFrontDrive.isBusy()) {
             // Display position - can be removed
             telemetry.addData("  left  position ", leftFrontDrive.getCurrentPosition());
             telemetry.addData("  right position", rightFrontDrive.getCurrentPosition());
@@ -362,25 +353,26 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
             telemetry.update();
         }
 
-        myRobotState  = movebaby.STOP_ROBOT;
+        myRobotState = movebaby.STOP_ROBOT;
     }
 
     //****** detectApril State **************************************************
     //
     // Not implemented
 
-    public void detectApril(){
+    public void detectApril() {
 
     }
 
-    public void StrafeUsingImu(double langth ) {
+    public void StrafeUsingImu(double langth) {
         {
             moveRobot(0.0, 0.0, 0.0);
         }
     }
+
     //****** turn45UsingIMU State *********************************************
     //
-    public void turn45UsingIMU( double angle) {
+    public void turn45UsingIMU(double angle) {
 
         while (opModeIsActive()) {
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -389,11 +381,10 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
             sleep(10);
 
             if (angle < imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + 5 &&
-                    imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - 5 < angle)
-            {
+                    imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - 5 < angle) {
 
                 moveRobot(0.0, 0.0, 0.0);
-            }else{
+            } else {
                 moveRobot(0.0, 0.0, (angle - (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES))) / 45);
 
 
@@ -424,7 +415,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
                 */
         }
     }
-
 
 
 //************************************************************************
@@ -474,7 +464,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     }
 
 
-
     //***** rightFrontDrive.setPower(0);    * testMotors State ************************************************
     // Epp   sleep(2000);
     // Test 3 robot motions
@@ -486,7 +475,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         moveRobot(-0.5, 0.0, 0.0);
         sleep(2000);
         moveRobot(0.0, 0.0, 0.0);
-        sleep (2000);
+        sleep(2000);
 
         // Strafe
         moveRobot(0.0, 0.5, 0.0);
@@ -524,7 +513,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     // From original April tag program
     // robot aligns itstelf with April tag
 
-    public  void moveToAprilTag() {
+    public void moveToAprilTag() {
         //sleep(10);
         // Step through the list of detected tags and look for a matching tag
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -567,14 +556,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
 
             // Determine heading, range and Yaw (tag image rotation) error so we 
             // can use them to control the robot automatically.
-            double  rangeError      = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            double  headingError    = desiredTag.ftcPose.bearing;
-            double  yawError        = desiredTag.ftcPose.yaw;
+            double rangeError = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+            double headingError = desiredTag.ftcPose.bearing;
+            double yawError = desiredTag.ftcPose.yaw;
 
             // Use the speed and turn "gains" to calculate how we want the 
             // robot to move.
-            drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            turn   = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
             strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
             telemetry.addData("Auto", "Drive %5.2f, Strafe %5.2f, Turn %5.2f ",
@@ -587,11 +576,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         }
 
     }
-
-
-
-
-
 
 
     //******************** printState Sate *************************************//
@@ -608,7 +592,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     }
 
 
-
     //********************** moveRobot *********************************************
     // Copyright (c) 2023 FIRST. All rights reserved.
     // From original April tag program
@@ -621,12 +604,12 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     // <p>
     // Positive Yaw is counter-clockwise
 
-    public void moveRobot(double x, double y,double yaw) {
+    public void moveRobot(double x, double y, double yaw) {
         // Calculate wheel powers.
-        double leftFrontPower    =  x -y -yaw;
-        double rightFrontPower   =  x +y +yaw;
-        double leftBackPower     =  x +y -yaw;
-        double rightBackPower    =  x -y +yaw;
+        double leftFrontPower = x - y - yaw;
+        double rightFrontPower = x + y + yaw;
+        double leftBackPower = x + y - yaw;
+        double rightBackPower = x - y + yaw;
 
         // Normalize wheel powers to be less than 1.0
         double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -688,7 +671,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
     // This can only be called AFTER calling initAprilTag(), and only 
     // works for Webcams;
 
-    private void    setManualExposure(int exposureMS, int gain) {
+    private void setManualExposure(int exposureMS, int gain) {
         // Wait for the camera to be open, then use the controls
 
         if (visionPortal == null) {
@@ -708,20 +691,54 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode
         }
 
         // Set camera controls unless we are stopping.
-        if (!isStopRequested())
-        {
+        if (!isStopRequested()) {
             ExposureControl exposureControl =
                     visionPortal.getCameraControl(ExposureControl.class);
             if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
                 exposureControl.setMode(ExposureControl.Mode.Manual);
                 sleep(50);
             }
-            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            exposureControl.setExposure((long) exposureMS, TimeUnit.MILLISECONDS);
             sleep(20);
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(gain);
             sleep(20);
         }
     }
-}
 
+    //************* autoOneBall ****************
+    public void  autoOneBall(double distance) {
+        if(opModeIsActive()){
+        leftFrontDrive.setPower(-0.5);
+        rightFrontDrive.setPower(-0.5);
+        rightBackDrive.setPower(-0.5);
+        leftBackDrive.setPower(-0.5);
+
+        sleep(500);
+
+        leftFrontDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(0);
+        leftBackDrive.setPower(0);
+
+        sleep(1000);
+
+        leftFrontDrive.setPower(-1);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(-1);
+        leftBackDrive.setPower(0);
+
+            sleep(1000);
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(0);
+            sleep(5);
+            myRobotState = movebaby.STOP_ROBOT;
+     }
+
+    }
+
+
+
+}
