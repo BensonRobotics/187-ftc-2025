@@ -33,6 +33,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -76,6 +77,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
+    private DcMotor intakeMotor = null;
 
 
 
@@ -101,7 +103,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
-
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -112,10 +114,11 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
         // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
         // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
@@ -141,7 +144,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             }
 
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
+            telemetry.addData("botHeading: ", botHeading);
 
             // Rotate the movement direction counter to the bot's rotation
             double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
@@ -152,7 +155,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double leftBackPower = (rotY - rotX + rx);
             double rightFrontPower = (rotY - rotX - rx);
             double rightBackPower = (rotY + rotX - rx);
+            double intakePower;
+            if (gamepad1.x){
+                intakePower = 1.0;
+            }
+            else if (gamepad1.b){
+                intakePower = -1;
+            }
+            else{
+                intakePower = 0.0;
+            }
+            double intakePower = gamepad1.x ? 1.0 : 0.0;
 
+            intakeMotor.setPower(intakePower);
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
             max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -166,22 +181,20 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 rightBackPower  /= max;
             }
 
-            // This is test code:
-            //
-            // Uncomment the following code to test your motor directions.
-            // Each button should make the corresponding motor run FORWARD.
-            //   1) First get all the motors to take to correct positions on the robot
-            //      by adjusting your Robot Configuration if necessary.
-            //   2) Then make sure they run in the correct direction by modifying the
-            //      the setDirection() calls above.
-            // Once the correct motors move in the correct direction re-comment this code.
+//             This is test code:
+//
+//             Uncomment the following code to test your motor directions.
+//             Each button should make the corresponding motor run FORWARD.
+//               1) First get all the motors to take to correct positions on the robot
+//                  by adjusting your Robot Configuration if necessary.
+//               2) Then make sure they run in the correct direction by modifying the
+//                  the setDirection() calls above.
+//             Once the correct motors move in the correct direction re-comment this code.
 
-            /*
-            leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
+ //           leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
+   //         leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
+     //       rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
+       //     rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
 
             // Send calculated power to wheels
             leftFrontDrive.setPower(leftFrontPower);
