@@ -86,7 +86,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
-
+    private DcMotorEx launcher = null;
     private static final boolean USE_WEBCAM = true;  // false for a phone camera
     private static final int DESIRED_TAG_ID = 16;    // -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
@@ -150,6 +150,19 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     public void runOpMode() {
         // Initialize the Apriltag Detection process
 
+        boolean isOnLeft = true;
+
+        while (isStarted() == false){
+
+            if(gamepad1.b){
+                isOnLeft=true;
+            }
+            else if (gamepad1.x){
+                isOnLeft = false;
+            }
+            telemetry.addData("is On Left:", isOnLeft);
+            telemetry.update();
+        }
         initAprilTag();
 
 
@@ -158,7 +171,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "frontRightMotor");
         leftBackDrive = hardwareMap.get(DcMotorEx.class, "backLeftMotor");
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "backRightMotor");
-
+        launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
 
         imu = hardwareMap.get(IMU.class, "imu");
 
@@ -240,7 +253,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
                     testMotorsBasic(0.5);
                     break;
                 case AUTO_ONE_BALL:
-                    autoOneBall(0.5);
+                    autoOneBall();
                     break;
                 default:
                     shutDown();
@@ -707,8 +720,12 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     }
 
     //************* autoOneBall ****************
-    public void  autoOneBall(double distance) {
-        if(opModeIsActive()){
+    public void  autoOneBall() {
+        boolean isOnLeft = true;
+
+
+
+        if(isOnLeft){
         leftFrontDrive.setPower(-0.5);
         rightFrontDrive.setPower(-0.5);
         rightBackDrive.setPower(-0.5);
@@ -720,25 +737,58 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
         leftBackDrive.setPower(0);
-
+        launcher.setPower(1.0);
         sleep(1000);
 
         leftFrontDrive.setPower(-1);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(-1);
         leftBackDrive.setPower(0);
+            launcher.setPower(0);
 
-            sleep(1000);
+            sleep(500);
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(0);
+
+            sleep(5);
+            myRobotState = movebaby.STOP_ROBOT ;
+            }
+                 else
+            {
+            leftFrontDrive.setPower(-0.5);
+            rightFrontDrive.setPower(-0.5);
+            rightBackDrive.setPower(-0.5);
+            leftBackDrive.setPower(-0.5);
+
+            sleep(500);
+
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(0);
+            launcher.setPower(1);
+            sleep(1000);
+
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(-1);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(-1);
+
+            sleep(500);
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(0);
+
             sleep(5);
             myRobotState = movebaby.STOP_ROBOT;
+        }
      }
 
     }
 
 
 
-}
+
