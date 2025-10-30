@@ -149,8 +149,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
 
 
-            if (gamepad1.left_trigger > 0.2){
-                launchMotor.setPower(configVars.LAUNCHMOTORSPEED);
+            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
+                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger));
+                telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
             }
             else{
                 launchMotor.setPower(0);
@@ -171,13 +172,17 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 driveModeToggled = false;
             }
 
+            if (gamepad1.start) {
+                imu.resetYaw();
+            }
+
             //drive speed toggle
             if (gamepad1.y && driveSpeedMult == fastDriveSpeed && !driveSpeedToggled) {
 
                 driveSpeedMult = slowDriveSpeed ;
                 driveSpeedToggled = true;
             }
-            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveModeToggled){
+            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveSpeedToggled){
                 driveSpeedMult = fastDriveSpeed ;
                 driveSpeedToggled = true;
 
@@ -201,7 +206,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             telemetry.addData("botHeading: ", botHeading);
 
-            // Rotate the movement irection counter to the bot's rotation
+            // Rotate the movement direction counter to the bot's rotation
             if (isFieldCentricModeOn) {
                  rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading)) * driveSpeedMult;
                  rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading)) * driveSpeedMult;
