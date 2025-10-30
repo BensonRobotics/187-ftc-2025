@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -38,6 +39,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.configVars;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -67,6 +69,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
+
 @TeleOp(name="Field Centric Mecanum Teleop", group="Linear OpMode")
 
 public class mecanumFieldCentricTeleop extends LinearOpMode {
@@ -78,7 +81,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor intakeMotor = null;
-
+    private DcMotor launchMotor = null;
 
 
     @Override
@@ -97,6 +100,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
 
 
+
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
@@ -104,6 +108,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
+        launchMotor = hardwareMap.get(DcMotor.class, "launch_motor");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -126,7 +131,14 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
+        double fastDriveSpeed = 1;
+        double slowDriveSpeed = 0.5;
+        double rotY;
+        boolean isFieldCentricModeOn = false;
+        double rotX;
+        double driveSpeedMult = fastDriveSpeed;
+        boolean driveModeToggled = false;
+        boolean driveSpeedToggled = false;
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
@@ -136,6 +148,45 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double x =  gamepad1.left_stick_x;
             double rx     =  gamepad1.right_stick_x;
 
+
+            if (gamepad1.left_trigger > 0.2){
+                launchMotor.setPower(configVars.LAUNCHMOTORSPEED);
+            }
+            else{
+                launchMotor.setPower(0);
+            }
+
+
+
+            if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {
+
+                isFieldCentricModeOn = false;
+                driveModeToggled = true;
+            }
+            else if (gamepad1.back && isFieldCentricModeOn == false && !driveModeToggled){
+                isFieldCentricModeOn = true;
+                driveModeToggled = true;
+            }
+            else if(!gamepad1.back){
+                driveModeToggled = false;
+            }
+
+            //drive speed toggle
+            if (gamepad1.y && driveSpeedMult == fastDriveSpeed && !driveSpeedToggled) {
+
+                driveSpeedMult = slowDriveSpeed ;
+                driveSpeedToggled = true;
+            }
+            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveModeToggled){
+                driveSpeedMult = fastDriveSpeed ;
+                driveSpeedToggled = true;
+
+            }
+            else if(!gamepad1.y){
+                driveSpeedToggled = false;
+            }
+
+            telemetry.addData("is field centric mode on:", isFieldCentricModeOn);
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
             // The equivalent button is start on Xbox-style controllers.
@@ -143,12 +194,22 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 imu.resetYaw();
             }
 
+            /*code to get the launcher working -- uncomment later
+
+
+             */
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             telemetry.addData("botHeading: ", botHeading);
 
-            // Rotate the movement direction counter to the bot's rotation
-            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+            // Rotate the movement irection counter to the bot's rotation
+            if (isFieldCentricModeOn) {
+                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading)) * driveSpeedMult;
+                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading)) * driveSpeedMult;
+            }
+            else{
+                 rotX = x * driveSpeedMult;
+                 rotY = y * driveSpeedMult;
+            }
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
             double leftFrontPower = (rotY + rotX + rx);
@@ -156,16 +217,16 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double rightFrontPower = (rotY - rotX - rx);
             double rightBackPower = (rotY + rotX - rx);
             double intakePower;
-            if (gamepad1.x){
+            if (gamepad1.left_bumper){
                 intakePower = 1.0;
             }
-            else if (gamepad1.b){
+            else if (gamepad1.right_bumper){
                 intakePower = -1;
             }
             else{
                 intakePower = 0.0;
             }
-            double intakePower = gamepad1.x ? 1.0 : 0.0;
+
 
             intakeMotor.setPower(intakePower);
             // Normalize the values so no wheel power exceeds 100%
