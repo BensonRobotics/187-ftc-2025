@@ -83,11 +83,12 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     //(adjust for your robot)
 
     private DcMotorEx leftFrontDrive = null;
+    private DcMotorEx intake = null;
     private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
     private DcMotorEx launcher = null;
-    private static final boolean USE_WEBCAM = true;  // false for a phone camera
+   //private static final boolean USE_WEBCAM = false;  // false for a phone camera
     private static final int DESIRED_TAG_ID = 16;    // -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the 
@@ -96,6 +97,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
     //detected AprilTag
 
+    boolean isOnLeft = true;
+    boolean isOnback = true;
 
     boolean targetFound = false;    // AprilTag target is detected
     double drive = 0;        // Desired forward power/speed (-1 to +1)
@@ -140,8 +143,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         GOBILDA
     }
 
-    //manufacture myBrand = manufacture.REV;
-    manufacture myBrand = manufacture.GOBILDA;
+    manufacture myBrand = manufacture.REV;
+   // manufacture myBrand = manufacture.GOBILDA;
 
     //****** runOpMode ***********************************************************
     // Execution begines here
@@ -150,9 +153,12 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     public void runOpMode() {
         // Initialize the Apriltag Detection process
 
-        boolean isOnLeft = true;
+
 
         while (isStarted() == false){
+
+
+
 
             if(gamepad1.b){
                 isOnLeft=true;
@@ -160,19 +166,30 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             else if (gamepad1.x){
                 isOnLeft = false;
             }
+
+            if(gamepad1.a){
+                isOnback=false;
+            }
+            else if (gamepad1.y){
+                isOnback = false;
+            }
+            telemetry.addData("is On back:", isOnback);
             telemetry.addData("is On Left:", isOnLeft);
             telemetry.update();
+
         }
+
+
         initAprilTag();
 
 
         // Map the configuration motor labels to code variables
-        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "frontLeftMotor");
-        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "frontRightMotor");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "backLeftMotor");
-        rightBackDrive = hardwareMap.get(DcMotorEx.class, "backRightMotor");
-        launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
-
+        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "left_front_drive");
+        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "right_front_drive");
+        leftBackDrive = hardwareMap.get(DcMotorEx.class, "left_back_drive");
+        rightBackDrive = hardwareMap.get(DcMotorEx.class, "right_back_drive");
+        launcher = hardwareMap.get(DcMotorEx.class, "launch_motor");
+        intake = hardwareMap.get(DcMotorEx.class, "intake_motor");
         imu = hardwareMap.get(IMU.class, "imu");
 
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
@@ -207,9 +224,9 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         sleep(3000); // provide time to read the brand of the frame
 
 
-        if (USE_WEBCAM)
+       /* if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
-
+*/
         // Wait for driver to press start
         telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
@@ -662,7 +679,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         aprilTag.setDecimation(2);
 
         // Create the vision portal by using a builder.
-        if (USE_WEBCAM) {
+       /* if (USE_WEBCAM) {
             visionPortal = new VisionPortal.Builder()
                     .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                     .addProcessor(aprilTag)
@@ -672,7 +689,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
                     .setCamera(BuiltinCameraDirection.BACK)
                     .addProcessor(aprilTag)
                     .build();
-        }
+        }*/
     }
 
     //******************* setManualExposure *******************************************
@@ -721,15 +738,91 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
     //************* autoOneBall ****************
     public void  autoOneBall() {
-        boolean isOnLeft = true;
 
+
+        if(isOnback){
+            if(isOnLeft){
+
+            leftFrontDrive.setPower(-1);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(-1);
+            leftBackDrive.setPower(0);
+                launcher.setPower(1.0);
+            sleep(1000);
+
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(0);
+
+            sleep(5000);
+
+            intake .setPower(1.0);
+            sleep(10000);
+
+
+            launcher.setPower(0);
+
+            sleep(500);
+
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(0);
+
+            //stop robot
+
+            sleep(5);
+            myRobotState = movebaby.STOP_ROBOT ;
+
+            }
+            else {
+                leftFrontDrive.setPower(-1);
+                rightFrontDrive.setPower(0);
+                rightBackDrive.setPower(-1);
+                leftBackDrive.setPower(0);
+                launcher.setPower(1.0);
+                sleep(1000);
+
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(0);
+                rightBackDrive.setPower(0);
+                leftBackDrive.setPower(0);
+
+                sleep(5000);
+
+                intake .setPower(1.0);
+
+                sleep(10000);
+
+
+                launcher.setPower(0);
+
+                sleep(500);
+
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(0);
+                rightBackDrive.setPower(0);
+                leftBackDrive.setPower(0);
+
+                //stop robot
+
+                sleep(5);
+                myRobotState = movebaby.STOP_ROBOT ;
+            }
+
+        }else {
 
 
         if(isOnLeft){
+
         leftFrontDrive.setPower(-0.5);
         rightFrontDrive.setPower(-0.5);
         rightBackDrive.setPower(-0.5);
         leftBackDrive.setPower(-0.5);
+            launcher.setPower(0.85);
+
+        //move robot backword
 
         sleep(500);
 
@@ -737,20 +830,31 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
         leftBackDrive.setPower(0);
-        launcher.setPower(1.0);
-        sleep(1000);
+
+        intake .setPower(1.0);
+
+        sleep(500);
+
+
+       // stop and launch ball
+
+        sleep(10000);
 
         leftFrontDrive.setPower(-1);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(-1);
         leftBackDrive.setPower(0);
             launcher.setPower(0);
+            intake .setPower(0);
+            //move out of launch zone
 
             sleep(500);
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(0);
+
+            //stop robot
 
             sleep(5);
             myRobotState = movebaby.STOP_ROBOT ;
@@ -761,6 +865,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(-0.5);
             rightBackDrive.setPower(-0.5);
             leftBackDrive.setPower(-0.5);
+                launcher.setPower(0.85);
+                //move robot backword
 
             sleep(500);
 
@@ -768,26 +874,36 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(0);
-            launcher.setPower(1);
+            intake .setPower(1.0);
+
+            // stop and launch ball
+
             sleep(1000);
 
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(-1);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(-1);
+                launcher.setPower(0);
+                intake .setPower(0);
+                //move out of launch zone
 
-            sleep(500);
+                sleep(500);
+
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(0);
 
+            //stop robot
+
             sleep(5);
             myRobotState = movebaby.STOP_ROBOT;
         }
      }
-
     }
+
+}
 
 
 
