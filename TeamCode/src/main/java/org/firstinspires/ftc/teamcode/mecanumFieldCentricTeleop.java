@@ -144,9 +144,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x =  gamepad1.left_stick_x;
-            double rx     =  gamepad1.right_stick_x;
+            double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
+            double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
+            double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
 
 
             if (gamepad1.left_trigger > 0.2){
@@ -223,7 +223,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             else if (gamepad1.right_bumper){
                 intakePower = -1;
             }
-            else{
+            else {
                 intakePower = 0.0;
             }
 
@@ -269,4 +269,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.update();
         }
-    }}
+    }
+
+    private double scaleInput(double input, double power, boolean active)
+    {
+        double output = input;
+        if (active) {
+            if (input < 0) {
+                output = input * (Math.pow(-input, power));
+            } else {
+                output = input * (Math.pow(input, power));
+            }
+        }
+        telemetry.addData("scaled value", output);
+        return output;
+    }
+}
