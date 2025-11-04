@@ -133,6 +133,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         runtime.reset();
         double fastDriveSpeed = 1;
         double slowDriveSpeed = 0.5;
+        double maxSpeed = 1;
         double rotY;
         boolean isFieldCentricModeOn = false;
         double rotX;
@@ -150,7 +151,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
 
             if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
-                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger));
+                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * maxSpeed);
                 telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
             }
             else{
@@ -208,19 +209,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
             // Rotate the movement direction counter to the bot's rotation
             if (isFieldCentricModeOn) {
-                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading)) * driveSpeedMult;
-                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading)) * driveSpeedMult;
+                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading));
+                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading));
             }
             else{
-                 rotX = x * driveSpeedMult;
-                 rotY = y * driveSpeedMult;
+                 rotX = x;
+                 rotY = y;
             }
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower = (rotY + rotX + rx);
-            double leftBackPower = (rotY - rotX + rx);
-            double rightFrontPower = (rotY - rotX - rx);
-            double rightBackPower = (rotY + rotX - rx);
+            double leftFrontPower = (rotY + rotX + rx) * driveSpeedMult;
+            double leftBackPower = (rotY - rotX + rx)* driveSpeedMult;
+            double rightFrontPower = (rotY - rotX - rx)* driveSpeedMult;
+            double rightBackPower = (rotY + rotX - rx)* driveSpeedMult;
             double intakePower;
             if (gamepad1.left_bumper){
                 intakePower = 1.0;

@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  * and TURN_GAIN constants.
  */
 
-@Autonomous(name="April Tag State Version 20251008", group = "Concept")
+@Autonomous(name="Actual League Meet 0 Auto(USE THIS)", group = "Concept")
 
 public class StateVersionOfAprilTag3_new extends LinearOpMode {
     // Adjustable robot setting.
@@ -98,13 +98,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     //detected AprilTag
 
     boolean isOnLeft = true;
-    boolean isOnback = true;
+    boolean isOnback = false;
 
     boolean targetFound = false;    // AprilTag target is detected
     double drive = 0;        // Desired forward power/speed (-1 to +1)
     double strafe = 0;        // Desired strafe power/speed (-1 to +1)
     double turn = 0;        // Desired turning power/speed (-1 to +1)
 
+    double launchSpeed = configVars.AUTOLAUNCHMOTORSPEED;
     // for move a distance
     final int DISTANCE = 2000; // number of clicks to move
     final int VELOCITY = 600; // number of clicks per second
@@ -747,7 +748,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(-1);
             leftBackDrive.setPower(0);
-                launcher.setPower(1.0);
+                launcher.setPower(launchSpeed);
             sleep(1000);
 
             leftFrontDrive.setPower(0);
@@ -781,7 +782,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
                 rightFrontDrive.setPower(0);
                 rightBackDrive.setPower(-1);
                 leftBackDrive.setPower(0);
-                launcher.setPower(1.0);
+                launcher.setPower(launchSpeed);
                 sleep(1000);
 
                 leftFrontDrive.setPower(0);
@@ -793,7 +794,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
                 intake .setPower(1.0);
 
-                sleep(10000);
+                sleep(7000);
 
 
                 launcher.setPower(0);
@@ -820,7 +821,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightFrontDrive.setPower(-0.5);
         rightBackDrive.setPower(-0.5);
         leftBackDrive.setPower(-0.5);
-            launcher.setPower(0.85);
+            launcher.setPower(launchSpeed);
 
         //move robot backword
 
@@ -831,15 +832,19 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightBackDrive.setPower(0);
         leftBackDrive.setPower(0);
 
-        intake .setPower(1.0);
+
 
         sleep(500);
 
+        launcher.setPower(launchSpeed);
 
        // stop and launch ball
 
-        sleep(10000);
+        sleep(7000);
 
+        intake.setPower(1);
+
+        sleep(2000);;
         leftFrontDrive.setPower(-1);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(-1);
@@ -865,7 +870,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(-0.5);
             rightBackDrive.setPower(-0.5);
             leftBackDrive.setPower(-0.5);
-                launcher.setPower(0.85);
+                launcher.setPower(launchSpeed);
                 //move robot backword
 
             sleep(500);
@@ -874,11 +879,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
             leftBackDrive.setPower(0);
-            intake .setPower(1.0);
 
+
+            launcher.setPower(launchSpeed);
+
+            sleep(7000);
             // stop and launch ball
-
-            sleep(1000);
+                intake.setPower(1);
+            sleep(4000);
 
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(-1);
