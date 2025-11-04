@@ -14,7 +14,10 @@
  */
 
 package org.firstinspires.ftc.teamcode;
-
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -123,14 +126,18 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         STOP_ROBOT,
         TURN_ANGLE,
         BASIC_AUTO,
-        AUTO_ONE_BALL
+        AUTO_ONE_BALL,
+
+        LIMELIGHT_TEST
     }
 
 
     // Initial state
     //movebaby myRobotState  = movebaby.MOVE_TO_APRIL;
     // movebaby myRobotState  = movebaby.TURN_45;
-    movebaby myRobotState = movebaby.AUTO_ONE_BALL;
+   //movebaby myRobotState = movebaby.AUTO_ONE_BALL;
+    movebaby myRobotState = movebaby.LIMELIGHT_TEST;
+
 
     //movebaby myRobotState  = movebaby.MOTOR_TEST;
     // movebaby myRobotState  = movebaby.MOTOR_TEST_BASIC;
@@ -261,16 +268,20 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
                     break;
                 case TURN_45:
                     turn45UsingIMU(45.0);
-
                     break;
                 case MOTOR_TEST:
                     testMotors();
                     break;
+
                 case MOTOR_TEST_BASIC:
                     testMotorsBasic(0.5);
                     break;
+
                 case AUTO_ONE_BALL:
                     autoOneBall();
+                    break;
+                case LIMELIGHT_TEST:
+                    limelightTest();
                     break;
                 default:
                     shutDown();
@@ -747,9 +758,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(-1);
             leftBackDrive.setPower(0);
-                launcher.setPower(1.0);
-            sleep(1000);
+                launcher.setPower(0.85);
+            sleep(1700);
 
+                leftFrontDrive.setPower(1);
+                rightFrontDrive.setPower(-1);
+                rightBackDrive.setPower(-1);
+                leftBackDrive.setPower(1);
+            sleep(100);
             leftFrontDrive.setPower(0);
             rightFrontDrive.setPower(0);
             rightBackDrive.setPower(0);
@@ -762,7 +778,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
 
             launcher.setPower(0);
-
+                intake .setPower(0);
             sleep(500);
 
             leftFrontDrive.setPower(0);
@@ -777,11 +793,11 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
             }
             else {
-                leftFrontDrive.setPower(-1);
+                leftFrontDrive.setPower(1);
                 rightFrontDrive.setPower(0);
                 rightBackDrive.setPower(-1);
                 leftBackDrive.setPower(0);
-                launcher.setPower(1.0);
+                launcher.setPower(0.85 );
                 sleep(1000);
 
                 leftFrontDrive.setPower(0);
@@ -824,12 +840,14 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
         //move robot backword
 
-        sleep(500);
+        sleep(1000);
 
         leftFrontDrive.setPower(0);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
         leftBackDrive.setPower(0);
+
+            sleep(4000);
 
         intake .setPower(1.0);
 
@@ -838,7 +856,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
        // stop and launch ball
 
-        sleep(10000);
+        sleep(5000);
 
         leftFrontDrive.setPower(-1);
         rightFrontDrive.setPower(0);
@@ -861,47 +879,58 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             }
                  else
             {
-            leftFrontDrive.setPower(-0.5);
-            rightFrontDrive.setPower(-0.5);
-            rightBackDrive.setPower(-0.5);
-            leftBackDrive.setPower(-0.5);
+                leftFrontDrive.setPower(-0.5);
+                rightFrontDrive.setPower(-0.5);
+                rightBackDrive.setPower(-0.5);
+                leftBackDrive.setPower(-0.5);
                 launcher.setPower(0.85);
+
                 //move robot backword
 
-            sleep(500);
+                sleep(1000);
 
-            leftFrontDrive.setPower(0);
-            rightFrontDrive.setPower(0);
-            rightBackDrive.setPower(0);
-            leftBackDrive.setPower(0);
-            intake .setPower(1.0);
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(0);
+                rightBackDrive.setPower(0);
+                leftBackDrive.setPower(0);
 
-            // stop and launch ball
+                sleep(4000);
 
-            sleep(1000);
+                intake .setPower(1.0);
 
-            leftFrontDrive.setPower(0);
-            rightFrontDrive.setPower(-1);
-            rightBackDrive.setPower(0);
-            leftBackDrive.setPower(-1);
+                sleep(500);
+
+
+                // stop and launch ball
+
+                sleep(5000);
+
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(-1);
+                rightBackDrive.setPower(0);
+                leftBackDrive.setPower(-1);
                 launcher.setPower(0);
                 intake .setPower(0);
                 //move out of launch zone
 
                 sleep(500);
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(0);
+                rightBackDrive.setPower(0);
+                leftBackDrive.setPower(0);
 
-            leftFrontDrive.setPower(0);
-            rightFrontDrive.setPower(0);
-            rightBackDrive.setPower(0);
-            leftBackDrive.setPower(0);
+                //stop robot
 
-            //stop robot
-
-            sleep(5);
-            myRobotState = movebaby.STOP_ROBOT;
-        }
+                sleep(5);
+                myRobotState = movebaby.STOP_ROBOT ;
+            }
      }
     }
+
+    //******************* limelightTest ***************
+
+
+    public void limelightTest() {}
 
 }
 
