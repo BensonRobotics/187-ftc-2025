@@ -133,6 +133,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         runtime.reset();
         double fastDriveSpeed = 1;
         double slowDriveSpeed = 0.5;
+        double maxSpeed = 1;
         double rotY;
         boolean isFieldCentricModeOn = false;
         double rotX;
@@ -144,13 +145,14 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x =  gamepad1.left_stick_x;
-            double rx     =  gamepad1.right_stick_x;
+            double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
+            double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
+            double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
 
 
-            if (gamepad1.left_trigger > 0.2){
-                launchMotor.setPower(configVars.LAUNCHMOTORSPEED);
+            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
+                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * maxSpeed);
+                telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
             }
             else{
                 launchMotor.setPower(0);
@@ -171,13 +173,17 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 driveModeToggled = false;
             }
 
+            if (gamepad1.start) {
+                imu.resetYaw();
+            }
+
             //drive speed toggle
             if (gamepad1.y && driveSpeedMult == fastDriveSpeed && !driveSpeedToggled) {
 
                 driveSpeedMult = slowDriveSpeed ;
                 driveSpeedToggled = true;
             }
-            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveModeToggled){
+            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveSpeedToggled){
                 driveSpeedMult = fastDriveSpeed ;
                 driveSpeedToggled = true;
 
@@ -201,21 +207,21 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             telemetry.addData("botHeading: ", botHeading);
 
-            // Rotate the movement irection counter to the bot's rotation
+            // Rotate the movement direction counter to the bot's rotation
             if (isFieldCentricModeOn) {
-                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading)) * driveSpeedMult;
-                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading)) * driveSpeedMult;
+                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading));
+                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading));
             }
             else{
-                 rotX = x * driveSpeedMult;
-                 rotY = y * driveSpeedMult;
+                 rotX = x;
+                 rotY = y;
             }
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower = (rotY + rotX + rx);
-            double leftBackPower = (rotY - rotX + rx);
-            double rightFrontPower = (rotY - rotX - rx);
-            double rightBackPower = (rotY + rotX - rx);
+            double leftFrontPower = (rotY + rotX + rx) * driveSpeedMult;
+            double leftBackPower = (rotY - rotX + rx)* driveSpeedMult;
+            double rightFrontPower = (rotY - rotX - rx)* driveSpeedMult;
+            double rightBackPower = (rotY + rotX - rx)* driveSpeedMult;
             double intakePower;
             if (gamepad1.left_bumper){
                 intakePower = 1.0;
@@ -223,7 +229,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             else if (gamepad1.right_bumper){
                 intakePower = -1;
             }
-            else{
+            else {
                 intakePower = 0.0;
             }
 
@@ -269,4 +275,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.update();
         }
-    }}
+    }
+
+    private double scaleInput(double input, double power, boolean active)
+    {
+        double output = input;
+        if (active) {
+            if (input < 0) {
+                output = input * (Math.pow(-input, power));
+            } else {
+                output = input * (Math.pow(input, power));
+            }
+        }
+        telemetry.addData("scaled value", output);
+        return output;
+    }
+}
