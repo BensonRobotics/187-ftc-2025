@@ -18,6 +18,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -32,6 +33,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -59,7 +61,18 @@ import java.util.concurrent.TimeUnit;
 
 @Autonomous(name="April Tag State Version 20251008", group = "Concept")
 
+
+
 public class StateVersionOfAprilTag3_new extends LinearOpMode {
+
+    Limelight3A  limelight;
+
+   // @Override
+    //public void init() {
+       // limelight = hardwareMap.get(Limelight3A.class, "limelight");
+       // limelight.setPollRateHz(100);
+        //limelight.start();
+   // }
     // Adjustable robot setting.
     final double DESIRED_DISTANCE = 12.0; // how close the camera should get to 
     // the target (inches)
@@ -150,6 +163,10 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         GOBILDA
     }
 
+
+
+
+
     manufacture myBrand = manufacture.REV;
    // manufacture myBrand = manufacture.GOBILDA;
 
@@ -186,7 +203,6 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
         }
 
-
         initAprilTag();
 
 
@@ -198,13 +214,17 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         launcher = hardwareMap.get(DcMotorEx.class, "launch_motor");
         intake = hardwareMap.get(DcMotorEx.class, "intake_motor");
         imu = hardwareMap.get(IMU.class, "imu");
-
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(100);
+        limelight.start();
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
 
         ));
         imu.initialize(parameters);
+
+
 
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
@@ -930,9 +950,27 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     //******************* limelightTest ***************
 
 
-    public void limelightTest() {}
+    public void limelightTest()
+    {LLResult result = limelight.getLatestResult();
+        Pose3D botpose = result.getBotpose();
+        double tx = result.getTx();
+        double ty = result.getTy();
+        double ta = result.getTa();
+        double x = botpose.getPosition().x;
+        double y = botpose.getPosition().y;
+        double distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x+1.4,2)
+                +Math.pow(botpose.getPosition().y+1.5,2));
 
-}
+        telemetry.addData("x",x);
+        telemetry.addData("y",y);
+        telemetry.addData("Tx",tx);
+        telemetry.addData("Ty",ty);
+        telemetry.addData("Ta",ta);
+        telemetry.addData("distance From AprilTag", distanceFromAprilTag );
+            telemetry.update();
+
+
+}}
 
 
 
