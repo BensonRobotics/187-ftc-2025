@@ -27,9 +27,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.drive.opmode;
+
+package org.firstinspires.ftc.teamcode;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -39,6 +46,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.configVars;
 
 /*
@@ -97,7 +105,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         imu.initialize(parameters);
 
 
-
+        Limelight3A  limelight;
 
 
 
@@ -109,6 +117,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotor.class, "launch_motor");
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(100);
+        limelight.start();
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -148,6 +159,24 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
             double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
             double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
+
+
+
+
+            LLResult result = limelight.getLatestResult();
+            Pose3D botpose = result.getBotpose();
+            double tx = result.getTx();
+            double ty = result.getTy();
+            double ta = result.getTa();
+            double lx = botpose.getPosition().x;
+            double ly = botpose.getPosition().y;
+
+            telemetry.addData("x", lx);
+            telemetry.addData("y", ly);
+            telemetry.addData("Tx", tx);
+            telemetry.addData("Ty",ty);
+            telemetry.addData("Ta",ta);
+
 
 
             if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
