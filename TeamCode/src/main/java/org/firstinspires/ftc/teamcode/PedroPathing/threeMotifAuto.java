@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.PedroPathing;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
@@ -39,7 +40,8 @@ public class threeMotifAuto extends LinearOpMode {
         motif 2 is pgp
         motif 3 is gpp
      */
-    private int motif = 0;
+/*
+private int motif = 0;
     private Path scorePreload;
     private PathChain launchMotifPreload, prepareMotifOneIntake, intakeMotifOne, launchMotifOne, prepareMotifTwoIntake, intakeMotifTwo, launchMotifTwo;
 
@@ -185,4 +187,4 @@ public class threeMotifAuto extends LinearOpMode {
 }
 
 
-    }
+    } */

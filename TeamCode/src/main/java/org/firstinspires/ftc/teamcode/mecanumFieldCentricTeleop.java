@@ -29,17 +29,28 @@
 
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import static org.firstinspires.ftc.teamcode.configVars.VELOCITYMULT;
+
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.configVars;
+
+import java.util.List;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -81,9 +92,12 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor intakeMotor = null;
-    private DcMotor launchMotor = null;
+    private DcMotorEx launchMotor = null;
 
+    private CRServo intakeServo;
+    private Servo launcherServo;
 
+    //Limelight3A limelight;
     @Override
     public void runOpMode() {
         IMU imu;
@@ -108,7 +122,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
-        launchMotor = hardwareMap.get(DcMotor.class, "launch_motor");
+        launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
+        intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
+        launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -133,31 +149,97 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         runtime.reset();
         double fastDriveSpeed = 1;
         double slowDriveSpeed = 0.5;
+        double distanceFromAprilTag = 1;
         double maxSpeed = 1;
         double rotY;
         boolean isFieldCentricModeOn = false;
         double rotX;
         double driveSpeedMult = fastDriveSpeed;
+        double TPS = 2800;
+        boolean isOnBlue = true;
         boolean driveModeToggled = false;
         boolean driveSpeedToggled = false;
+        boolean servoIntakeToggled = false;
+        boolean servoLauncherToggled = false;
+        boolean isIntakeServoUp = false;
+        boolean isLauncherServoUp = false;
+        double max = 0;
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            double max;
+
+
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
             double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
             double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
 
+           /* if (gamepad1.dpad_right){
 
-            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
-                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * maxSpeed);
-                telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
+                launcherServo.setPosition(1);
+            }
+*/
+            if (gamepad1.dpad_left){
+
+                intakeServo.setPower(1);
+            } else if (gamepad1.dpad_right) {
+
+                intakeServo.setPower(-1);
             }
             else{
-                launchMotor.setPower(0);
+                intakeServo.setPower(0);
             }
 
+
+
+            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
+                launchMotor.setVelocity(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * TPS);
+                telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
+            }
+
+            else{
+                launchMotor.setVelocity(0);
+            }
+
+
+            if (gamepad1.dpad_down){
+                isOnBlue = true;
+            }
+            if (gamepad1.dpad_up){
+                isOnBlue = false;
+            }
+
+/*
+            if (gamepad1.x && isIntakeServoUp == true && !servoIntakeToggled) {
+                intakeServo.setPosition(0);
+                isIntakeServoUp = false;
+                servoIntakeToggled = true;
+            }
+            else if (gamepad1.x && isIntakeServoUp == false && !servoIntakeToggled){
+                intakeServo.setPosition(0.5);
+                isIntakeServoUp = true;
+                servoIntakeToggled = true;
+            }
+            else if(!gamepad1.x){
+
+                servoIntakeToggled = false;
+            }
+*/
+
+
+            if (gamepad1.b && isLauncherServoUp == true && !servoLauncherToggled) {
+                launcherServo.setPosition(0);
+                isLauncherServoUp = false;
+                servoLauncherToggled = true;
+            }
+            else if (gamepad1.b && isLauncherServoUp == false && !servoLauncherToggled){
+                launcherServo.setPosition(1);
+                isLauncherServoUp = true;
+                servoLauncherToggled = true;
+            }
+            else if(!gamepad1.b){
+                servoLauncherToggled = false;
+            }
 
 
             if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {

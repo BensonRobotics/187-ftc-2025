@@ -15,6 +15,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -111,6 +112,9 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     final int VELOCITY = 600; // number of clicks per second
     final double POWER = 0.5; // percent of full power
     IMU imu;
+
+    Limelight3A limelight;
+
 
     // Define the states 
     enum movebaby {
