@@ -204,7 +204,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
 */
 
-            if (launcherServo.getPosition() > LAUNCHSERVOINIT)){
+            if (launcherServo.getPosition() > LAUNCHSERVOINIT){
                 revolverMotor.setPower(0);
             }
          if (gamepad1.dpad_right && launcherServo.getPosition() <= LAUNCHSERVOINIT){
