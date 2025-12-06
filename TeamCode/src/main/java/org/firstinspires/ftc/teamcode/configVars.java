@@ -10,4 +10,8 @@ public class configVars {
     public static double VELOCITYMULT = 1;
     public static double AUTOLAUNCHMOTORSPEED = 0.65;
 
+    public static double LAUNCHSERVOINIT = 0;
+
+    public static double LAUNCHSERVOFINAL = 1;
+
 }

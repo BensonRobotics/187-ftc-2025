@@ -27,8 +27,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.drive.opmode;
+package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOFINAL;
+import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
 import static org.firstinspires.ftc.teamcode.configVars.VELOCITYMULT;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -94,6 +96,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private DcMotor intakeMotor = null;
     private DcMotorEx launchMotor = null;
 
+    private DcMotorEx revolverMotor = null;
     private CRServo intakeServo;
     private Servo launcherServo;
 
@@ -123,7 +126,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
-        intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
+        revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
+       // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -147,6 +151,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        int revolverCountsPerRev = 538;
         double fastDriveSpeed = 1;
         double slowDriveSpeed = 0.5;
         double distanceFromAprilTag = 1;
@@ -164,9 +169,14 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         boolean isIntakeServoUp = false;
         boolean isLauncherServoUp = false;
         double max = 0;
+        double launchServoInitialPos = 0;
+        double launchServoEndPos = 1;
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            revolverMotor.setTargetPosition(0);
+            launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+            revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -179,10 +189,11 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 launcherServo.setPosition(1);
             }
 */
-            if (gamepad1.dpad_left){
+            /*
+            if (gamepad1.dpad_up){
 
                 intakeServo.setPower(1);
-            } else if (gamepad1.dpad_right) {
+            } else if (gamepad1.dpad_down) {
 
                 intakeServo.setPower(-1);
             }
@@ -191,7 +202,25 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             }
 
 
+*/
 
+            if (launcherServo.getPosition() > LAUNCHSERVOINIT)){
+                revolverMotor.setPower(0);
+            }
+         if (gamepad1.dpad_right && launcherServo.getPosition() <= LAUNCHSERVOINIT){
+                if (!revolverMotor.isBusy());
+                {
+                    revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() + Math.ceil(revolverCountsPerRev / 3.0)));
+                    revolverMotor.setPower(1);
+                }
+            }
+            else if (gamepad1.dpad_left && launcherServo.getPosition() <= LAUNCHSERVOINIT){
+                if (!revolverMotor.isBusy());
+                {
+                    revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() - Math.ceil(revolverCountsPerRev / 3.0)));
+                    revolverMotor.setPower(-1);
+                }
+            }
             if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
                 launchMotor.setVelocity(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * TPS);
                 telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
@@ -202,12 +231,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             }
 
 
-            if (gamepad1.dpad_down){
-                isOnBlue = true;
-            }
-            if (gamepad1.dpad_up){
-                isOnBlue = false;
-            }
+
 
 /*
             if (gamepad1.x && isIntakeServoUp == true && !servoIntakeToggled) {
@@ -227,17 +251,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 */
 
 
-            if (gamepad1.b && isLauncherServoUp == true && !servoLauncherToggled) {
-                launcherServo.setPosition(0);
+
+
+            if (gamepad1.x && isLauncherServoUp == true && !servoLauncherToggled) {
+                launcherServo.setPosition(LAUNCHSERVOINIT);
                 isLauncherServoUp = false;
                 servoLauncherToggled = true;
             }
-            else if (gamepad1.b && isLauncherServoUp == false && !servoLauncherToggled){
-                launcherServo.setPosition(1);
+            else if (gamepad1.x && isLauncherServoUp == false && !servoLauncherToggled){
+                launcherServo.setPosition(LAUNCHSERVOFINAL);
                 isLauncherServoUp = true;
                 servoLauncherToggled = true;
             }
-            else if(!gamepad1.b){
+            else if(!gamepad1.x){
                 servoLauncherToggled = false;
             }
 

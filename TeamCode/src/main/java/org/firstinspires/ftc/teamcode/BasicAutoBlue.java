@@ -47,7 +47,7 @@ public class BasicAutoBlue extends LinearOpMode {
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
     private DcMotorEx shootingMOTOR = null;
-    private static final boolean USE_WEBCAM = true;  // false for a phone camera
+    private static final boolean USE_WEBCAM = false;  // false for a phone camera
     private static final int BLUEGOALTAG = 20;
     private static final int GPPTAG = 21;
     private static final int PGPTAG = 22;
@@ -57,6 +57,7 @@ public class BasicAutoBlue extends LinearOpMode {
     // AprilTag detection process.
     private int ApiriltagFoundid = 0;
     private boolean shooting = false;
+
 
     // Define the states 
     enum movebaby {
@@ -93,7 +94,7 @@ public class BasicAutoBlue extends LinearOpMode {
     public void runOpMode() {
         // Initialize the Apriltag Detection process
         initAprilTag();
-
+        double TPS = 2800;
         // Map the configuration motor labels to code variables
         leftFrontDrive = hardwareMap.get(DcMotorEx.class, "left_front_drive");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "right_front_drive");
@@ -147,9 +148,9 @@ public class BasicAutoBlue extends LinearOpMode {
                     printState("STOP_ROBOT");
                     shutDown();
                     break;
-                case READ_APRIL:
+             /*   case READ_APRIL:
                     detectObeliskApril(ApiriltagFoundid);
-                    break;
+                    break; */
                 case TURN_TO_SHOOT:
                  //   printState("TURN_TO_SHOOT");
                     detectGoalApril(ApiriltagFoundid);
@@ -197,7 +198,7 @@ public class BasicAutoBlue extends LinearOpMode {
             telemetry.update();
         }
         moveRobot(0, -0, 0);
-        myRobotState = movebaby.LOOK_FOR_APRILTAG;
+        myRobotState = movebaby.PARKING;
     }
 
 
@@ -225,8 +226,8 @@ public class BasicAutoBlue extends LinearOpMode {
             }
 
 
-        }
     }
+}
 
 
     //********************************************************************************
@@ -302,7 +303,7 @@ public class BasicAutoBlue extends LinearOpMode {
     public void shootBalls() {
         telemetry.addData(">", "shootballs");
         telemetry.update();
-        shootingMOTOR.setPower(0.75);
+        shootingMOTOR.setVelocity(2800);
         sleep(5000);
         shootingMOTOR.setPower(0.);
         myRobotState = movebaby.PARKING;

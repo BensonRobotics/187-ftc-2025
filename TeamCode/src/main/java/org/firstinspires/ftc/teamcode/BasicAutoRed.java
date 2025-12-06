@@ -47,7 +47,7 @@ public class BasicAutoRed extends LinearOpMode {
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
     private DcMotorEx shootingMOTOR = null;
-    private static final boolean USE_WEBCAM = true;  // false for a phone camera
+    private static final boolean USE_WEBCAM = false;  // false for a phone camera
     private static final int REDGOALTAG = 24;
     private static final int GPPTAG = 21;
     private static final int PGPTAG = 22;
@@ -147,9 +147,9 @@ public class BasicAutoRed extends LinearOpMode {
                     printState("STOP_ROBOT");
                     shutDown();
                     break;
-                case READ_APRIL:
+             /*   case READ_APRIL:
                     detectObeliskApril(ApiriltagFoundid);
-                    break;
+                    break; */
                 case TURN_TO_SHOOT:
                  //   printState("TURN_TO_SHOOT");
                     detectGoalApril(ApiriltagFoundid);
@@ -302,7 +302,7 @@ public class BasicAutoRed extends LinearOpMode {
     public void shootBalls() {
         telemetry.addData(">", "shootballs");
         telemetry.update();
-        shootingMOTOR.setPower(0.75);
+        shootingMOTOR.setVelocity(2800);
         sleep(5000);
         shootingMOTOR.setPower(0.);
         myRobotState = movebaby.PARKING;

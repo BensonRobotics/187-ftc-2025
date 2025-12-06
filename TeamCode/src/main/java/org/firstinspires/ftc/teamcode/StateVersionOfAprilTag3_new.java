@@ -113,7 +113,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     final double POWER = 0.5; // percent of full power
     IMU imu;
 
-    Limelight3A limelight;
+   // Limelight3A limelight;
 
 
     // Define the states 
