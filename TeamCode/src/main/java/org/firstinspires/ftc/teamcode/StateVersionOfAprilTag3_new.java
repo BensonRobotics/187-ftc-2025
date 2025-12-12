@@ -14,6 +14,9 @@
  */
 
 package org.firstinspires.ftc.teamcode;
+
+import android.graphics.Color;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -26,6 +29,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -64,7 +70,9 @@ import java.util.concurrent.TimeUnit;
 
 
 public class StateVersionOfAprilTag3_new extends LinearOpMode {
-
+    int slot1=0;
+    int slot2=0;
+    int slot3=0;
     Limelight3A  limelight;
 
    // @Override
@@ -103,13 +111,17 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
+
+    private NormalizedColorSensor colorSensor = null;
     private DcMotorEx launcher = null;
    //private static final boolean USE_WEBCAM = false;  // false for a phone camera
     private static final int DESIRED_TAG_ID = 16;    // -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the 
     // AprilTag detection process.
-    private AprilTagDetection desiredTag = null;     // Used to hold the data for a 
+    private AprilTagDetection desiredTag = null;     // Used to hold the data for a
+
+
 
     //detected AprilTag
 
@@ -141,6 +153,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         BASIC_AUTO,
         AUTO_ONE_BALL,
 
+        COLOR_TEST,
         LIMELIGHT_TEST
     }
 
@@ -149,8 +162,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     //movebaby myRobotState  = movebaby.MOVE_TO_APRIL;
     // movebaby myRobotState  = movebaby.TURN_45;
    //movebaby myRobotState = movebaby.AUTO_ONE_BALL;
-    movebaby myRobotState = movebaby.LIMELIGHT_TEST;
-
+   // movebaby myRobotState = movebaby.LIMELIGHT_TEST;
+    movebaby myRobotState = movebaby.COLOR_TEST;
 
     //movebaby myRobotState  = movebaby.MOTOR_TEST;
     // movebaby myRobotState  = movebaby.MOTOR_TEST_BASIC;
@@ -165,6 +178,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
 
 
+    final float[] hsvValues = new float[3];
 
 
     manufacture myBrand = manufacture.REV;
@@ -213,6 +227,7 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "right_back_drive");
         launcher = hardwareMap.get(DcMotorEx.class, "launch_motor");
         intake = hardwareMap.get(DcMotorEx.class, "intake_motor");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class,"sensor_color");
         imu = hardwareMap.get(IMU.class, "imu");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100);
@@ -303,6 +318,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
                 case LIMELIGHT_TEST:
                     limelightTest();
                     break;
+                case COLOR_TEST:
+                            colorTest();
                 default:
                     shutDown();
             }
@@ -958,8 +975,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         double ta = result.getTa();
         double x = botpose.getPosition().x;
         double y = botpose.getPosition().y;
-        double distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x+1.4,2)
-                +Math.pow(botpose.getPosition().y+1.5,2));
+        double distanceFromAprilTag = (Math.sqrt(Math.pow(botpose.getPosition().x+1.4,2)
+                +Math.pow(botpose.getPosition().y+1.5,2)))*1.55;
 
         telemetry.addData("x",x);
         telemetry.addData("y",y);
@@ -970,7 +987,53 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
             telemetry.update();
 
 
-}}
+}
+
+//******************************* colorTest **************************************************
+    public void colorTest(){
+        NormalizedRGBA colors= colorSensor.getNormalizedColors();
+            colorSensor.setGain(3);
+        Color.colorToHSV(colors.toColor(), hsvValues);
+
+
+
+        telemetry.addData("1",slot1);
+        telemetry.addData("2",slot2);
+        telemetry.addData("3",slot3);
+        telemetry.addData("h",hsvValues[0]);
+        telemetry.addData("v",hsvValues[1]);
+        telemetry.addData("red",colors.red);
+        telemetry.addData("green",colors.green);
+        telemetry.addData("blue",colors.blue);
+
+
+        if((hsvValues[0]>180 && hsvValues[0]<255)||(hsvValues[0]>120 && hsvValues[0]<181))
+        {
+            if(hsvValues[0]>181 && hsvValues[0]<255)
+            {
+               telemetry.addData("purple",2);
+               slot3=slot2;
+               slot2=slot1;
+               slot1=2;
+               while (hsvValues[0]>181 && hsvValues[0]<255){}
+            }else{
+                telemetry.addData("green",1);
+                slot3=slot2;
+                slot2=slot1;
+                slot1=1;
+                while ((hsvValues[0]>180 && hsvValues[0]<255)){}
+            }
+        } else {
+            telemetry.addData("no ball",0);
+        }
+        telemetry.update();
+    }
+
+
+
+
+
+}
 
 
 
