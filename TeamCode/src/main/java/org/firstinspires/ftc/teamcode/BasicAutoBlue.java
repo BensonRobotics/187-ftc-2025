@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -46,18 +47,21 @@ public class BasicAutoBlue extends LinearOpMode {
     private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
-    private DcMotorEx shootingMOTOR = null;
-    private static final boolean USE_WEBCAM = false;  // false for a phone camera
+    private DcMotorEx launchMotor = null;
+    private DcMotorEx intakeMotor = null;
+    private Servo launchServo;
+    private static final boolean USE_WEBCAM = true;  // false for a phone camera
     private static final int BLUEGOALTAG = 20;
     private static final int GPPTAG = 21;
     private static final int PGPTAG = 22;
     private static final int PPGTAG = 23;// -1 for ANY tag.
+    private static final double MIN_POS= 0.0;
+    private static final double LAUNCH_POS= 0.1;
     private VisionPortal visionPortal;               // Used to manage the video source.
-    private AprilTagProcessor aprilTag;              // Used for managing the 
-    // AprilTag detection process.
+    private AprilTagProcessor aprilTag;
+    private AprilTagDetection goalTag = null;
     private int ApiriltagFoundid = 0;
     private boolean shooting = false;
-
 
     // Define the states 
     enum movebaby {
@@ -94,25 +98,25 @@ public class BasicAutoBlue extends LinearOpMode {
     public void runOpMode() {
         // Initialize the Apriltag Detection process
         initAprilTag();
-        double TPS = 2800;
         // Map the configuration motor labels to code variables
         leftFrontDrive = hardwareMap.get(DcMotorEx.class, "left_front_drive");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "right_front_drive");
         leftBackDrive = hardwareMap.get(DcMotorEx.class, "left_back_drive");
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "right_back_drive");
-        shootingMOTOR = hardwareMap.get(DcMotorEx.class, "launch_motor");
-
+        launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
+        launchServo = hardwareMap.get(Servo.class, "launch_servo");
+        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake_motor");
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         switch (myBrand) {
             case GOBILDA:
                 telemetry.addData("GoBILDA frame", "");
-                leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-                leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-                rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-                rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-                shootingMOTOR.setDirection(DcMotor.Direction.FORWARD);
+                leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+                leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
+                rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+                rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+                launchMotor.setDirection(DcMotor.Direction.FORWARD);
                 break;
             case REV:
                 telemetry.addData("REV frame", "");
@@ -126,6 +130,8 @@ public class BasicAutoBlue extends LinearOpMode {
         telemetry.update();
         sleep(500); // provide time to read the brand of the frame
 
+
+        launchServo.setPosition(MIN_POS);
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
@@ -148,9 +154,9 @@ public class BasicAutoBlue extends LinearOpMode {
                     printState("STOP_ROBOT");
                     shutDown();
                     break;
-             /*   case READ_APRIL:
+                case READ_APRIL:
                     detectObeliskApril(ApiriltagFoundid);
-                    break; */
+                    break;
                 case TURN_TO_SHOOT:
                  //   printState("TURN_TO_SHOOT");
                     detectGoalApril(ApiriltagFoundid);
@@ -169,7 +175,6 @@ public class BasicAutoBlue extends LinearOpMode {
                 case PARKING:
                     parking();
 
-                    lookForAprilTag(0.3f);
                     break;
 
 
@@ -198,7 +203,7 @@ public class BasicAutoBlue extends LinearOpMode {
             telemetry.update();
         }
         moveRobot(0, -0, 0);
-        myRobotState = movebaby.PARKING;
+        myRobotState = movebaby.LOOK_FOR_APRILTAG;
     }
 
 
@@ -211,6 +216,7 @@ public class BasicAutoBlue extends LinearOpMode {
             if (detection.metadata != null) {
                 Nodetection = false;
                 ApiriltagFoundid = detection.id;
+                goalTag = detection;
             }
         }
 
@@ -226,8 +232,8 @@ public class BasicAutoBlue extends LinearOpMode {
             }
 
 
+        }
     }
-}
 
 
     //********************************************************************************
@@ -250,10 +256,8 @@ public class BasicAutoBlue extends LinearOpMode {
     }
 
 
-    // *************************** detectApril ******************************
-    // Copyright (c) 2023 FIRST. All rights reserved.
-    // From original April tag program
-    // robot detects April tag
+    // *************************** detectObeliskApril ******************************
+    //
 
     public void detectObeliskApril(int ApiriltagFound) {
 
@@ -266,8 +270,6 @@ public class BasicAutoBlue extends LinearOpMode {
             turnslightly();
             myRobotState = movebaby.LOOK_FOR_APRILTAG;
         }
-
-
     }
 
     public void parking() {
@@ -292,7 +294,6 @@ public class BasicAutoBlue extends LinearOpMode {
             turnslightly();
             myRobotState = movebaby.LOOK_FOR_APRILTAG;
         }
-
         sleep(500);
     }
 
@@ -303,11 +304,28 @@ public class BasicAutoBlue extends LinearOpMode {
     public void shootBalls() {
         telemetry.addData(">", "shootballs");
         telemetry.update();
-        shootingMOTOR.setVelocity(2800);
+        launchMotor.setPower(0.75);
+        centerTag();
         sleep(5000);
-        shootingMOTOR.setPower(0.);
+        launchServo.setPosition(LAUNCH_POS);
+        sleep(500);
+        launchServo.setPosition(MIN_POS);
+
+        launchMotor.setPower(0.0);
+        // put code to launch artifact here
         myRobotState = movebaby.PARKING;
     }
+
+
+
+
+    //****** centerTag State **************************************************
+    public void centerTag() {
+        telemetry.addData("Bearing", "%3.0f degrees", goalTag.ftcPose.bearing);
+        telemetry.update();
+}
+
+
 
 
     //****** testMotorBasic State **********************************************
@@ -472,7 +490,7 @@ public class BasicAutoBlue extends LinearOpMode {
         rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
-        shootingMOTOR.setPower(0);
+        launchMotor.setPower(0);
     }
 
 
