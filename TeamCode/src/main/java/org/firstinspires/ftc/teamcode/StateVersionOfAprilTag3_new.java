@@ -16,7 +16,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
-
+import com.qualcomm.robotcore.hardware.LED;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -113,6 +115,10 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
     private DcMotorEx rightBackDrive = null;
 
     private NormalizedColorSensor colorSensor = null;
+
+    private DigitalChannel greenLed;
+
+    private DigitalChannel purpleLed;
     private DcMotorEx launcher = null;
    //private static final boolean USE_WEBCAM = false;  // false for a phone camera
     private static final int DESIRED_TAG_ID = 16;    // -1 for ANY tag.
@@ -229,6 +235,8 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
         intake = hardwareMap.get(DcMotorEx.class, "intake_motor");
         colorSensor = hardwareMap.get(NormalizedColorSensor.class,"sensor_color");
         imu = hardwareMap.get(IMU.class, "imu");
+        purpleLed = hardwareMap.get(DigitalChannel.class,"purple");
+        greenLed = hardwareMap.get(DigitalChannel.class,"green");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100);
         limelight.start();
@@ -990,6 +998,9 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 }
 
 //******************************* colorTest **************************************************
+    //Sebastian :
+
+
     public void colorTest(){
         NormalizedRGBA colors= colorSensor.getNormalizedColors();
             colorSensor.setGain(3);
@@ -997,34 +1008,32 @@ public class StateVersionOfAprilTag3_new extends LinearOpMode {
 
 
 
-        telemetry.addData("1",slot1);
-        telemetry.addData("2",slot2);
-        telemetry.addData("3",slot3);
+      //  telemetry.addData("1",slot1);
+     //  telemetry.addData("2",slot2);
+     //  telemetry.addData("3",slot3);
         telemetry.addData("h",hsvValues[0]);
-        telemetry.addData("v",hsvValues[1]);
-        telemetry.addData("red",colors.red);
-        telemetry.addData("green",colors.green);
-        telemetry.addData("blue",colors.blue);
+      //  telemetry.addData("v",hsvValues[1]);
+      //  telemetry.addData("red",colors.red);
+      //  telemetry.addData("green",colors.green);
+     //   telemetry.addData("blue",colors.blue);
 
 
-        if((hsvValues[0]>180 && hsvValues[0]<255)||(hsvValues[0]>120 && hsvValues[0]<181))
-        {
-            if(hsvValues[0]>181 && hsvValues[0]<255)
-            {
-               telemetry.addData("purple",2);
-               slot3=slot2;
-               slot2=slot1;
-               slot1=2;
-               while (hsvValues[0]>181 && hsvValues[0]<255){}
-            }else{
-                telemetry.addData("green",1);
-                slot3=slot2;
-                slot2=slot1;
-                slot1=1;
-                while ((hsvValues[0]>180 && hsvValues[0]<255)){}
-            }
+        if (hsvValues[0] > 181 && hsvValues[0] < 255) {
+            telemetry.addData("purple", 2);
+            greenLed.setState(false);
+            purpleLed.setState(true);
+
+        } else if (hsvValues[0] > 120 && hsvValues[0] < 181) {
+
+            telemetry.addData("green", 1);
+            greenLed.setState(true);
+            purpleLed.setState(false);
+
         } else {
-            telemetry.addData("no ball",0);
+
+            telemetry.addData("no ball", 0);
+            greenLed.setState(false);
+            purpleLed.setState(false);
         }
         telemetry.update();
     }
