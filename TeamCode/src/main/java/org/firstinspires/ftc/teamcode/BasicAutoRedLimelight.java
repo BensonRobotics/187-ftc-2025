@@ -57,7 +57,7 @@ public class BasicAutoRedLimelight extends LinearOpMode {
     private static final int PGPTAG = 22;
     private static final int PPGTAG = 23;// -1 for ANY tag.
     private static final double MIN_POS= 0.0;
-    private static final double LAUNCH_POS= 0.1;
+    private static final double LAUNCH_POS= 0.4;
   //  private VisionPortal visionPortal;               // Used to manage the video source.
   //  private AprilTagProcessor aprilTag;
   //  private AprilTagDetection goalTag = null;
@@ -173,7 +173,7 @@ private double tagBearing;
                     break;
                 case STRAFE:
                  //   printState("STRAFE");
-                    strafe(2000);
+                    strafe(2500);
                     break;
                 case MOTOR_TEST:
                     testMotorsBasic(0.2);
@@ -314,11 +314,11 @@ private double tagBearing;
     //****** shootBalls State **************************************************
    
     public void shootBalls() {
-        telemetry.addData(">", "shootballs");
-        telemetry.update();
-        launchMotor.setPower(0.75);
+//        telemetry.addData(">", "shootballs");
+//        telemetry.update();
+        launchMotor.setPower(0.9);
         centerTag();
-        sleep(5000);
+        sleep(2000);
         launchServo.setPosition(LAUNCH_POS);
         sleep(500);
         launchServo.setPosition(MIN_POS);
@@ -331,8 +331,31 @@ private double tagBearing;
 
     //****** centerTag State **************************************************
     public void centerTag() {
-      
+
+        boolean Nodetection = true;
+        while (tagBearing > 1.0)  {
+            telemetry.addData("bearing ", tagBearing);
+            telemetry.update();
+            turnslightly();
+            LLResult result = limelight.getLatestResult();
+            if(result != null  && result.isValid()) {
+                List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+                for (LLResultTypes.FiducialResult fr : fiducialResults) {
+                    telemetry.addData("Fiducial", "ID: %d, Family: %s, X: %.2f, Y: %.2f", fr.getFiducialId(), fr.getFamily(), fr.getTargetXDegrees(), fr.getTargetYDegrees());
+                    ApiriltagFoundid = fr.getFiducialId();
+                    tagBearing = fr.getTargetXDegrees();
+                    Nodetection = false;
+                    telemetry.addData("  TAG ID  ", ApiriltagFoundid);
+                    telemetry.update();
+                    //sleep(1000);
+                }
+            }
+
+            sleep(500);
+        }
     }
+
+
 
 
 
