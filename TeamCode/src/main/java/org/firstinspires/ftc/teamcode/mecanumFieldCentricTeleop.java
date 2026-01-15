@@ -27,27 +27,38 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 package org.firstinspires.ftc.teamcode;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.LLStatus;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import static org.firstinspires.ftc.teamcode.configVars.FASTVELOCITYMULT;
+import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOFINAL;
+import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
+import static org.firstinspires.ftc.teamcode.configVars.SLOWVELOCITYMULT;
+import static org.firstinspires.ftc.teamcode.configVars.VELOCITYMULT;
+import static org.firstinspires.ftc.teamcode.configVars.WIGGLEAMPLITUDE;
+import static org.firstinspires.ftc.teamcode.configVars.WIGGLEFREQUENCY;
+
+import static java.lang.Math.abs;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.configVars;
+
+import java.util.List;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -89,9 +100,13 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor intakeMotor = null;
-    private DcMotor launchMotor = null;
+    private DcMotorEx launchMotor = null;
 
+    private DcMotorEx revolverMotor = null;
+    private CRServo intakeServo;
+    private Servo launcherServo;
 
+    //Limelight3A limelight;
     @Override
     public void runOpMode() {
         IMU imu;
@@ -105,7 +120,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         imu.initialize(parameters);
 
 
-        Limelight3A  limelight;
+
 
 
 
@@ -116,10 +131,10 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
-        launchMotor = hardwareMap.get(DcMotor.class, "launch_motor");
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.setPollRateHz(100);
-        limelight.start();
+        launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
+        revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
+       // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
+        launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -134,7 +149,13 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        revolverMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
@@ -142,51 +163,218 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        int revolverCountsPerRev = 538;
         double fastDriveSpeed = 1;
         double slowDriveSpeed = 0.5;
+        double distanceFromAprilTag = 1;
         double maxSpeed = 1;
         double rotY;
         boolean isFieldCentricModeOn = false;
         double rotX;
         double driveSpeedMult = fastDriveSpeed;
+        double TPS = 2800;
+        boolean isOnBlue = true;
         boolean driveModeToggled = false;
         boolean driveSpeedToggled = false;
+        boolean servoIntakeToggled = false;
+        boolean servoLauncherToggled = false;
+        boolean isIntakeServoUp = false;
+        boolean isLauncherServoUp = false;
+        boolean isRevolverSlowModeOn = false;
+        boolean revolverJiggleMode = false;
+        double revolverJiggleFrequency = 7;
+        double revolverJiggleAmplitude = 4;
+        int revolverJiggleOffset = 0;
+        double max = 0;
+        double launchServoInitialPos = 0;
+        double launchServoEndPos = 1;
+
+
+        ElapsedTime timeSinceStart = new ElapsedTime();
+        revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        revolverMotor.setTargetPosition(0);
+        revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            double max;
+
+            /*{LLResult result = limelight.getLatestResult();
+                Pose3D botpose = result.getBotpose();
+                double tx = result.getTx();
+                double ty = result.getTy();
+                double ta = result.getTa();
+                double x = botpose.getPosition().x;
+                double y = botpose.getPosition().y;
+                double distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x+1.4,2)
+                        +Math.pow(botpose.getPosition().y+1.5,2));
+
+                telemetry.addData("x",x);
+                telemetry.addData("y",y);
+                telemetry.addData("Tx",tx);
+                telemetry.addData("Ty",ty);
+                telemetry.addData("Ta",ta);
+                telemetry.addData("distance From AprilTag", distanceFromAprilTag );
+*/
+            launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
+            if (gamepad1.b){
+                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                revolverMotor.setTargetPosition(0);
+                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
             double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
             double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
 
+           /* if (gamepad1.dpad_right){
 
+                launcherServo.setPosition(1);
+            }
+*/
+            /*
+            if (gamepad1.dpad_up){
 
+                intakeServo.setPower(1);
+            } else if (gamepad1.dpad_down) {
 
-            LLResult result = limelight.getLatestResult();
-            Pose3D botpose = result.getBotpose();
-            double tx = result.getTx();
-            double ty = result.getTy();
-            double ta = result.getTa();
-            double lx = botpose.getPosition().x;
-            double ly = botpose.getPosition().y;
-
-            telemetry.addData("x", lx);
-            telemetry.addData("y", ly);
-            telemetry.addData("Tx", tx);
-            telemetry.addData("Ty",ty);
-            telemetry.addData("Ta",ta);
-
-
-
-            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
-                launchMotor.setPower(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * maxSpeed);
-                telemetry.addData("Launcher Speed", launchMotor.getPower() * 100);
+                intakeServo.setPower(-1);
             }
             else{
-                launchMotor.setPower(0);
+                intakeServo.setPower(0);
             }
 
+
+
+*/
+
+
+            /*
+            if (launcherServo.getPosition() > LAUNCHSERVOINIT){
+                revolverMotor.setPower(0);
+            }
+*//*
+            if (revolverJiggleMode) {
+                revolverJiggleOffset = (int) (Math.sin(timeSinceStart.seconds() * WIGGLEFREQUENCY) * WIGGLEAMPLITUDE);
+                revolverMotor.setTargetPosition(revolverMotor.getTargetPosition() + revolverJiggleOffset);
+                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                if (revolverJiggleOffset < 0){
+                    revolverMotor.setPower(-1);
+                } else if (revolverJiggleOffset >= 0){
+                    revolverMotor.setPower(1);
+                }
+            }
+*/
+            if (gamepad1.dpad_right && gamepad1.a){
+                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                revolverMotor.setTargetPosition(0);
+                revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                revolverMotor.setPower(0.2);
+                isRevolverSlowModeOn = true;
+
+
+            }
+
+            else if(gamepad1.dpad_left && gamepad1.a){
+                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                revolverMotor.setTargetPosition(0);
+                revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                revolverMotor.setPower(-0.2);
+                isRevolverSlowModeOn = true;
+
+            }
+        else if (gamepad1.dpad_right && revolverMotor.isBusy() == false){
+
+                    revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() + Math.ceil(revolverCountsPerRev / 3.0)));
+                    revolverMotor.setPower(1);
+                isRevolverSlowModeOn = false;
+                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            }
+            else if (gamepad1.dpad_left && revolverMotor.isBusy() == false){
+
+                revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() - Math.ceil(revolverCountsPerRev / 3.0)));
+                revolverMotor.setPower(-1);
+                isRevolverSlowModeOn = false;
+                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            }
+            else if (gamepad1.dpad_up){
+                revolverMotor.setPower(0);
+
+            }
+            else if (isRevolverSlowModeOn == true){
+
+                revolverMotor.setPower(0);
+
+            }
+            else{
+                revolverMotor.setPower((revolverMotor.getTargetPosition()-revolverMotor.getCurrentPosition()));
+            }
+            //evil evil evil evil scale input code
+/*
+            if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
+                launchMotor.setVelocity(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * TPS * VELOCITYMULT);
+                telemetry.addData("Launcher power", launchMotor.getPower());
+                telemetry.addData("launcher velocity:", launchMotor.getVelocity());
+            }
+*/
+
+            //good sane and normal launcher code
+
+            if (gamepad1.left_trigger >= 0.5){
+                launchMotor.setVelocity(TPS * SLOWVELOCITYMULT);
+            }
+
+            else if (gamepad1.right_trigger >= 0.5){
+
+                launchMotor.setVelocity(TPS * FASTVELOCITYMULT);
+            }
+            else{
+                launchMotor.setVelocity(0);
+            }
+
+/*
+            if (gamepad1.dpad_up){
+                revolverJiggleMode = true;
+            } else if (gamepad1.dpad_down) {
+                revolverJiggleMode = false;
+            }
+*/
+/*
+            if (gamepad1.x && isIntakeServoUp == true && !servoIntakeToggled) {
+                intakeServo.setPosition(0);
+                isIntakeServoUp = false;
+                servoIntakeToggled = true;
+            }
+            else if (gamepad1.x && isIntakeServoUp == false && !servoIntakeToggled){
+                intakeServo.setPosition(0.5);
+                isIntakeServoUp = true;
+                servoIntakeToggled = true;
+            }
+            else if(!gamepad1.x){
+
+                servoIntakeToggled = false;
+            }
+*/
+
+
+
+
+            if (gamepad1.x && isLauncherServoUp == true && !servoLauncherToggled) {
+                launcherServo.setPosition(LAUNCHSERVOINIT);
+                isLauncherServoUp = false;
+                servoLauncherToggled = true;
+            }
+            else if (gamepad1.x && isLauncherServoUp == false && !servoLauncherToggled){
+                launcherServo.setPosition(LAUNCHSERVOFINAL);
+                isLauncherServoUp = true;
+                servoLauncherToggled = true;
+            }
+            else if(!gamepad1.x){
+                servoLauncherToggled = false;
+            }
 
 
             if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {
@@ -235,7 +423,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
              */
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             telemetry.addData("botHeading: ", botHeading);
-
+            telemetry.addData("revolver Motor Target Pos:", revolverMotor.getTargetPosition());
+            telemetry.addData("revolver Motor Current Pos:", revolverMotor.getCurrentPosition());
             // Rotate the movement direction counter to the bot's rotation
             if (isFieldCentricModeOn) {
                  rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading));
@@ -258,6 +447,10 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             else if (gamepad1.right_bumper){
                 intakePower = -1;
             }
+            else if (revolverMotor.isBusy()){
+                intakePower = 1;
+            }
+
             else {
                 intakePower = 0.0;
             }
@@ -266,9 +459,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             intakeMotor.setPower(intakePower);
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
-            max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
-            max = Math.max(max, Math.abs(leftBackPower));
-            max = Math.max(max, Math.abs(rightBackPower));
+            max = Math.max(abs(leftFrontPower), abs(rightFrontPower));
+            max = Math.max(max, abs(leftBackPower));
+            max = Math.max(max, abs(rightBackPower));
 
             if (max > 1.0) {
                 leftFrontPower  /= max;
@@ -306,17 +499,18 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         }
     }
 
-    private double scaleInput(double input, double power, boolean active)
-    {
-        double output = input;
-        if (active) {
-            if (input < 0) {
-                output = input * (Math.pow(-input, power));
-            } else {
-                output = input * (Math.pow(input, power));
+
+        private double scaleInput(double input, double power, boolean active)
+        {
+            double output = input;
+            if (active) {
+                if (input < 0) {
+                    output = input * (Math.pow(-input, power));
+                } else {
+                    output = input * (Math.pow(input, power));
+                }
             }
+            telemetry.addData("scaled value", output);
+            return output;
         }
-        telemetry.addData("scaled value", output);
-        return output;
     }
-}
