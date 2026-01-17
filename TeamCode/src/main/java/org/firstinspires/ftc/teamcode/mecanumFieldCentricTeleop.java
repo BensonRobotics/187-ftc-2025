@@ -106,7 +106,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private CRServo intakeServo;
     private Servo launcherServo;
 
-    //Limelight3A limelight;
+    Limelight3A limelight;
+
     @Override
     public void runOpMode() {
         IMU imu;
@@ -119,21 +120,19 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
-
-
-
+        limelight.pipelineSwitch(2);
 
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
-       // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
+        // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -150,6 +149,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
         intakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        revolverMotor.setDirection(DcMotor.Direction.REVERSE);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -173,7 +173,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         double rotX;
         double driveSpeedMult = fastDriveSpeed;
         double TPS = 2800;
-        boolean isOnBlue = true;
+        boolean isOnBlue = false;
+        boolean allianceToggled = false;
         boolean driveModeToggled = false;
         boolean driveSpeedToggled = false;
         boolean servoIntakeToggled = false;
@@ -188,44 +189,48 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         double max = 0;
         double launchServoInitialPos = 0;
         double launchServoEndPos = 1;
+        double revolverTargetPosition = 0;
 
 
         ElapsedTime timeSinceStart = new ElapsedTime();
         revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        revolverMotor.setTargetPosition(0);
+        revolverTargetPosition = 0;
+        revolverMotor.setTargetPosition((int) revolverTargetPosition);
         revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            /*{LLResult result = limelight.getLatestResult();
+            {
+                LLResult result = limelight.getLatestResult();
                 Pose3D botpose = result.getBotpose();
                 double tx = result.getTx();
                 double ty = result.getTy();
                 double ta = result.getTa();
                 double x = botpose.getPosition().x;
                 double y = botpose.getPosition().y;
-                double distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x+1.4,2)
-                        +Math.pow(botpose.getPosition().y+1.5,2));
+                distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x + 1.4, 2)
+                        + Math.pow(botpose.getPosition().y + 1.5, 2));
 
-                telemetry.addData("x",x);
-                telemetry.addData("y",y);
-                telemetry.addData("Tx",tx);
-                telemetry.addData("Ty",ty);
-                telemetry.addData("Ta",ta);
-                telemetry.addData("distance From AprilTag", distanceFromAprilTag );
-*/
-            launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+                telemetry.addData("x", x);
+                telemetry.addData("y", y);
+                telemetry.addData("Tx", tx);
+                telemetry.addData("Ty", ty);
+                telemetry.addData("Ta", ta);
+                telemetry.addData("distance From AprilTag", distanceFromAprilTag);
 
-            if (gamepad1.b){
-                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                revolverMotor.setTargetPosition(0);
-                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            }
+                launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y   = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
-            double x =  scaleInput(gamepad1.left_stick_x, 1.5, true);
-            double rx     =  scaleInput(gamepad1.right_stick_x, 1.5, true);
+                if (gamepad1.b) {
+                    revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    revolverTargetPosition = 0;
+                    revolverMotor.setTargetPosition((int) revolverTargetPosition);
+                    revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
+
+                // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
+                y = scaleInput(-gamepad1.left_stick_y, 1.5, true);  // Note: pushing stick forward gives negative value
+                x = scaleInput(gamepad1.left_stick_x, 1.5, true);
+                double rx = scaleInput(gamepad1.right_stick_x, 1.5, true);
 
            /* if (gamepad1.dpad_right){
 
@@ -265,54 +270,48 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 }
             }
 */
-            if (gamepad1.dpad_right && gamepad1.a){
-                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                revolverMotor.setTargetPosition(0);
-                revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                revolverMotor.setPower(0.2);
-                isRevolverSlowModeOn = true;
+                if (gamepad1.dpad_right && gamepad1.a) {
+                    revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    revolverMotor.setTargetPosition(0);
+                    revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    revolverMotor.setPower(0.2);
+                    isRevolverSlowModeOn = true;
 
 
-            }
+                } else if (gamepad1.dpad_left && gamepad1.a) {
+                    revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    revolverTargetPosition = 0;
+                    revolverMotor.setTargetPosition(0);
+                    revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    revolverMotor.setPower(-0.2);
+                    isRevolverSlowModeOn = true;
 
-            else if(gamepad1.dpad_left && gamepad1.a){
-                revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                revolverMotor.setTargetPosition(0);
-                revolverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                revolverMotor.setPower(-0.2);
-                isRevolverSlowModeOn = true;
-
-            }
-        else if (gamepad1.dpad_right && revolverMotor.isBusy() == false){
-
-                    revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() + Math.ceil(revolverCountsPerRev / 3.0)));
+                } else if (gamepad1.dpad_right && revolverMotor.isBusy() == false) {
+                    revolverTargetPosition += 537.7 / 3;
+                    revolverMotor.setTargetPosition((int) revolverTargetPosition);
                     revolverMotor.setPower(1);
-                isRevolverSlowModeOn = false;
-                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    isRevolverSlowModeOn = false;
+                    revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            }
-            else if (gamepad1.dpad_left && revolverMotor.isBusy() == false){
+                } else if (gamepad1.dpad_left && revolverMotor.isBusy() == false) {
+                    revolverTargetPosition -= 537.7 / 3;
+                    revolverMotor.setTargetPosition((int) revolverTargetPosition);
+                    revolverMotor.setPower(-1);
+                    isRevolverSlowModeOn = false;
+                    revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                revolverMotor.setTargetPosition((int) (revolverMotor.getTargetPosition() - Math.ceil(revolverCountsPerRev / 3.0)));
-                revolverMotor.setPower(-1);
-                isRevolverSlowModeOn = false;
-                revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+                } else if (gamepad1.dpad_up) {
+                    revolverMotor.setPower(0);
 
-            }
-            else if (gamepad1.dpad_up){
-                revolverMotor.setPower(0);
+                } else if (isRevolverSlowModeOn == true) {
 
-            }
-            else if (isRevolverSlowModeOn == true){
+                    revolverMotor.setPower(0);
 
-                revolverMotor.setPower(0);
-
-            }
-            else{
-                revolverMotor.setPower((revolverMotor.getTargetPosition()-revolverMotor.getCurrentPosition()));
-            }
-            //evil evil evil evil scale input code
+                } else {
+                    revolverMotor.setPower((revolverMotor.getTargetPosition() - revolverMotor.getCurrentPosition()));
+                }
+                //evil evil evil evil scale input code
 /*
             if (Math.max(gamepad1.right_trigger, gamepad1.left_trigger) > 0.1){
                 launchMotor.setVelocity(Math.max(gamepad1.right_trigger, gamepad1.left_trigger) * TPS * VELOCITYMULT);
@@ -321,19 +320,16 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             }
 */
 
-            //good sane and normal launcher code
+                //good sane and normal launcher code
 
-            if (gamepad1.left_trigger >= 0.5){
-                launchMotor.setVelocity(TPS * SLOWVELOCITYMULT);
-            }
+                if (gamepad1.left_trigger >= 0.5) {
+                    launchMotor.setVelocity(TPS * SLOWVELOCITYMULT);
+                } else if (gamepad1.right_trigger >= 0.5) {
 
-            else if (gamepad1.right_trigger >= 0.5){
-
-                launchMotor.setVelocity(TPS * FASTVELOCITYMULT);
-            }
-            else{
-                launchMotor.setVelocity(0);
-            }
+                    launchMotor.setVelocity(TPS * FASTVELOCITYMULT);
+                } else {
+                    launchMotor.setVelocity(0);
+                }
 
 /*
             if (gamepad1.dpad_up){
@@ -360,115 +356,118 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 */
 
 
+                if (gamepad1.x && isLauncherServoUp == true && !servoLauncherToggled) {
+                    launcherServo.setPosition(LAUNCHSERVOINIT);
+                    isLauncherServoUp = false;
+                    servoLauncherToggled = true;
+                } else if (gamepad1.x && isLauncherServoUp == false && !servoLauncherToggled) {
+                    launcherServo.setPosition(LAUNCHSERVOFINAL);
+                    isLauncherServoUp = true;
+                    servoLauncherToggled = true;
+                } else if (!gamepad1.x) {
+                    servoLauncherToggled = false;
+                }
+
+                if (gamepad1.dpad_down && isOnBlue == true && !allianceToggled) {
+                    launcherServo.setPosition(LAUNCHSERVOINIT);
+                    isOnBlue = false;
+                    limelight.pipelineSwitch(2);
+                    allianceToggled = true;
+                } else if (gamepad1.dpad_down && isLauncherServoUp == false && !allianceToggled) {
+                    launcherServo.setPosition(LAUNCHSERVOFINAL);
+                    isOnBlue = true;
+                    limelight.pipelineSwitch(3);
+                    allianceToggled = true;
+                } else if (!gamepad1.dpad_down) {
+                    allianceToggled = false;
+                }
 
 
-            if (gamepad1.x && isLauncherServoUp == true && !servoLauncherToggled) {
-                launcherServo.setPosition(LAUNCHSERVOINIT);
-                isLauncherServoUp = false;
-                servoLauncherToggled = true;
-            }
-            else if (gamepad1.x && isLauncherServoUp == false && !servoLauncherToggled){
-                launcherServo.setPosition(LAUNCHSERVOFINAL);
-                isLauncherServoUp = true;
-                servoLauncherToggled = true;
-            }
-            else if(!gamepad1.x){
-                servoLauncherToggled = false;
-            }
+                if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {
+
+                    isFieldCentricModeOn = false;
+                    driveModeToggled = true;
+                } else if (gamepad1.back && isFieldCentricModeOn == false && !driveModeToggled) {
+                    isFieldCentricModeOn = true;
+                    driveModeToggled = true;
+                } else if (!gamepad1.back) {
+                    driveModeToggled = false;
+                }
+
+                if (gamepad1.start) {
+                    imu.resetYaw();
+                }
+
+                //drive speed toggle
+                if (gamepad1.y && driveSpeedMult == fastDriveSpeed && !driveSpeedToggled) {
+
+                    driveSpeedMult = slowDriveSpeed;
+                    driveSpeedToggled = true;
+                } else if (gamepad1.y && driveSpeedMult < fastDriveSpeed && !driveSpeedToggled) {
+                    driveSpeedMult = fastDriveSpeed;
+                    driveSpeedToggled = true;
+
+                } else if (!gamepad1.y) {
+                    driveSpeedToggled = false;
+                }
+
+                telemetry.addData("is field centric mode on:", isFieldCentricModeOn);
+                // This button choice was made so that it is hard to hit on accident,
+                // it can be freely changed based on preference.
+                // The equivalent button is start on Xbox-style controllers.
+                if (gamepad1.options) {
+                    imu.resetYaw();
+                }
+
+                /*code to get the launcher working -- uncomment later
 
 
-            if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {
-
-                isFieldCentricModeOn = false;
-                driveModeToggled = true;
-            }
-            else if (gamepad1.back && isFieldCentricModeOn == false && !driveModeToggled){
-                isFieldCentricModeOn = true;
-                driveModeToggled = true;
-            }
-            else if(!gamepad1.back){
-                driveModeToggled = false;
-            }
-
-            if (gamepad1.start) {
-                imu.resetYaw();
-            }
-
-            //drive speed toggle
-            if (gamepad1.y && driveSpeedMult == fastDriveSpeed && !driveSpeedToggled) {
-
-                driveSpeedMult = slowDriveSpeed ;
-                driveSpeedToggled = true;
-            }
-            else if (gamepad1.y && driveSpeedMult < fastDriveSpeed  &&!driveSpeedToggled){
-                driveSpeedMult = fastDriveSpeed ;
-                driveSpeedToggled = true;
-
-            }
-            else if(!gamepad1.y){
-                driveSpeedToggled = false;
-            }
-
-            telemetry.addData("is field centric mode on:", isFieldCentricModeOn);
-            // This button choice was made so that it is hard to hit on accident,
-            // it can be freely changed based on preference.
-            // The equivalent button is start on Xbox-style controllers.
-            if (gamepad1.options) {
-                imu.resetYaw();
-            }
-
-            /*code to get the launcher working -- uncomment later
+                 */
+                double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                telemetry.addData("botHeading: ", botHeading);
+                telemetry.addData("revolver Motor Target Pos:", revolverMotor.getTargetPosition());
+                telemetry.addData("revolver Motor Target Pos Variable:", revolverTargetPosition);
+                telemetry.addData("revolver Motor Current Pos:", revolverMotor.getCurrentPosition());
+                telemetry.addData("isOnBlue:", isOnBlue);
+                // Rotate the movement direction counter to the bot's rotation
+                if (isFieldCentricModeOn) {
+                    rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading));
+                    rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading));
+                } else {
+                    rotX = x;
+                    rotY = y;
+                }
+                // Combine the joystick requests for each axis-motion to determine each wheel's power.
+                // Set up a variable for each drive wheel to save the power level for telemetry.
+                double leftFrontPower = (rotY + rotX + rx) * driveSpeedMult;
+                double leftBackPower = (rotY - rotX + rx) * driveSpeedMult;
+                double rightFrontPower = (rotY - rotX - rx) * driveSpeedMult;
+                double rightBackPower = (rotY + rotX - rx) * driveSpeedMult;
+                double intakePower;
+                if (gamepad1.left_bumper) {
+                    intakePower = 1.0;
+                } else if (gamepad1.right_bumper) {
+                    intakePower = -1;
+                } else if (revolverMotor.isBusy()) {
+                    intakePower = 1;
+                } else {
+                    intakePower = 0.0;
+                }
 
 
-             */
-            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-            telemetry.addData("botHeading: ", botHeading);
-            telemetry.addData("revolver Motor Target Pos:", revolverMotor.getTargetPosition());
-            telemetry.addData("revolver Motor Current Pos:", revolverMotor.getCurrentPosition());
-            // Rotate the movement direction counter to the bot's rotation
-            if (isFieldCentricModeOn) {
-                 rotX = (x * Math.cos(-botHeading) - y * Math.sin(-botHeading));
-                 rotY = (x * Math.sin(-botHeading) + y * Math.cos(-botHeading));
-            }
-            else{
-                 rotX = x;
-                 rotY = y;
-            }
-            // Combine the joystick requests for each axis-motion to determine each wheel's power.
-            // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower = (rotY + rotX + rx) * driveSpeedMult;
-            double leftBackPower = (rotY - rotX + rx)* driveSpeedMult;
-            double rightFrontPower = (rotY - rotX - rx)* driveSpeedMult;
-            double rightBackPower = (rotY + rotX - rx)* driveSpeedMult;
-            double intakePower;
-            if (gamepad1.left_bumper){
-                intakePower = 1.0;
-            }
-            else if (gamepad1.right_bumper){
-                intakePower = -1;
-            }
-            else if (revolverMotor.isBusy()){
-                intakePower = 1;
-            }
+                intakeMotor.setPower(intakePower);
+                // Normalize the values so no wheel power exceeds 100%
+                // This ensures that the robot maintains the desired motion.
+                max = Math.max(abs(leftFrontPower), abs(rightFrontPower));
+                max = Math.max(max, abs(leftBackPower));
+                max = Math.max(max, abs(rightBackPower));
 
-            else {
-                intakePower = 0.0;
-            }
-
-
-            intakeMotor.setPower(intakePower);
-            // Normalize the values so no wheel power exceeds 100%
-            // This ensures that the robot maintains the desired motion.
-            max = Math.max(abs(leftFrontPower), abs(rightFrontPower));
-            max = Math.max(max, abs(leftBackPower));
-            max = Math.max(max, abs(rightBackPower));
-
-            if (max > 1.0) {
-                leftFrontPower  /= max;
-                rightFrontPower /= max;
-                leftBackPower   /= max;
-                rightBackPower  /= max;
-            }
+                if (max > 1.0) {
+                    leftFrontPower /= max;
+                    rightFrontPower /= max;
+                    leftBackPower /= max;
+                    rightBackPower /= max;
+                }
 
 //             This is test code:
 //
@@ -480,37 +479,37 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 //                  the setDirection() calls above.
 //             Once the correct motors move in the correct direction re-comment this code.
 
- //           leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-   //         leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-     //       rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-       //     rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
+                //           leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
+                //         leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
+                //       rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
+                //     rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
 
-            // Send calculated power to wheels
-            leftFrontDrive.setPower(leftFrontPower);
-            rightFrontDrive.setPower(rightFrontPower);
-            leftBackDrive.setPower(leftBackPower);
-            rightBackDrive.setPower(rightBackPower);
+                // Send calculated power to wheels
+                leftFrontDrive.setPower(leftFrontPower);
+                rightFrontDrive.setPower(rightFrontPower);
+                leftBackDrive.setPower(leftBackPower);
+                rightBackDrive.setPower(rightBackPower);
 
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
-            telemetry.update();
-        }
-    }
-
-
-        private double scaleInput(double input, double power, boolean active)
-        {
-            double output = input;
-            if (active) {
-                if (input < 0) {
-                    output = input * (Math.pow(-input, power));
-                } else {
-                    output = input * (Math.pow(input, power));
-                }
+                // Show the elapsed game time and wheel power.
+                telemetry.addData("Status", "Run Time: " + runtime.toString());
+                telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
+                telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
+                telemetry.addData("Revolver Power", revolverMotor.getPower());
+                telemetry.update();
             }
-            telemetry.addData("scaled value", output);
-            return output;
         }
     }
+
+    private double scaleInput(double input, double power, boolean active) {
+        double output = input;
+        if (active) {
+            if (input < 0) {
+                output = input * (Math.pow(-input, power));
+            } else {
+                output = input * (Math.pow(input, power));
+            }
+        }
+        telemetry.addData("scaled value", output);
+        return output;
+    }
+}
