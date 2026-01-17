@@ -57,7 +57,7 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
     private static final int PGPTAG = 22;
     private static final int PPGTAG = 23;// -1 for ANY tag.
     private static final double MIN_POS= 0.0;
-    private static final double LAUNCH_POS= 0.1;
+    private static final double LAUNCH_POS= 0.4;
 //    private VisionPortal visionPortal;               // Used to manage the video source.
 //    private AprilTagProcessor aprilTag;
 //    private AprilTagDetection goalTag = null;
@@ -170,18 +170,18 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
                     detectObeliskApril(ApiriltagFoundid);
                     break;
                 case TURN_TO_SHOOT:
-                 //   printState("TURN_TO_SHOOT");
+                    printState("TURN_TO_SHOOT");
                     detectGoalApril(ApiriltagFoundid);
                     break;
                 case STRAFE:
-                 //   printState("STRAFE");
+                    printState("STRAFE");
                     strafe(2000);
                     break;
                 case MOTOR_TEST:
                     testMotorsBasic(0.2);
                     break;
                 case LOOK_FOR_APRILTAG:
-                   // printState("LOOK_FOR_APRILTAG");
+                    printState("LOOK_FOR_APRILTAG");
                     lookForAprilTag(0.3f);
                     break;
                 case PARKING:
@@ -233,7 +233,7 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
                 Nodetection = false;
                 telemetry.addData("  TAG ID  ", ApiriltagFoundid);
                 telemetry.update();
-                sleep(500);
+                sleep(1000);
             }
         }
 
@@ -320,11 +320,12 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
 
     //****** shootBalls State **************************************************
     public void shootBalls() {
+        launchMotor.setPower(0.9);
+        centerTag();
+        telemetry.addData("bearing ",  tagBearing);
         telemetry.addData(">", "shootballs");
         telemetry.update();
-        launchMotor.setPower(0.75);
-        centerTag();
-        sleep(5000);
+        sleep(2000);
         launchServo.setPosition(LAUNCH_POS);
         sleep(500);
         launchServo.setPosition(MIN_POS);
@@ -335,12 +336,31 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
     }
 
 
-
-
     //****** centerTag State **************************************************
     public void centerTag() {
 
-}
+        boolean Nodetection = true;
+        while (tagBearing < -1.0)  {
+            telemetry.addData("bearing ", tagBearing);
+            telemetry.update();
+            turnslightly();
+            LLResult result = limelight.getLatestResult();
+            if(result != null  && result.isValid()) {
+                List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+                for (LLResultTypes.FiducialResult fr : fiducialResults) {
+                    telemetry.addData("Fiducial", "ID: %d, Family: %s, X: %.2f, Y: %.2f", fr.getFiducialId(), fr.getFamily(), fr.getTargetXDegrees(), fr.getTargetYDegrees());
+                    ApiriltagFoundid = fr.getFiducialId();
+                    tagBearing = fr.getTargetXDegrees();
+                    Nodetection = false;
+                    telemetry.addData("  TAG ID  ", ApiriltagFoundid);
+                    telemetry.update();
+                    //sleep(1000);
+                }
+            }
+
+            sleep(500);
+        }
+    }
 
 
 
@@ -417,7 +437,7 @@ public class BasicAutoBlueLimelight extends LinearOpMode {
     public void printState(String stateToPrint) {
         telemetry.addData("State is %s", stateToPrint);
         telemetry.update();
-        sleep(1000);
+        //sleep(1000);
     }
 
 
