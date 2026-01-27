@@ -11,6 +11,8 @@ import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
 
 import static java.lang.Thread.sleep;
 
+import android.graphics.Color;
+
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -25,6 +27,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -72,6 +75,7 @@ public class threeMotifAuto extends OpMode {
         motif 3 is gpp
      */
 
+    float[] hsvValues;
 
 int launchedArtifacts = 0;
     private Path scorePreload;
@@ -130,11 +134,7 @@ int launchedArtifacts = 0;
 
     }
 
-    public void detectMotifMethod() {
 
-        //enter in code to detect the motif
-
-    }
 
 
     public void launchArtifact(){
@@ -190,13 +190,15 @@ intakeIndexColors[2] = 0;
                     launchArtifact();
                     launchedArtifacts += 1;
                 } else if (intakeIndexColors[1] == 1) {
-                    launchArtifact();
-                    launchedArtifacts += 1;
                     turnRevolverClockwise();
-                } else if (intakeIndexColors[0] == 1) {
                     launchArtifact();
                     launchedArtifacts += 1;
+
+                } else if (intakeIndexColors[0] == 1) {
                     turnRevolverCounterClockwise();
+                    launchArtifact();
+                    launchedArtifacts += 1;
+
                 }
             }
             else if (launchedArtifacts == greenThreshold){
@@ -209,16 +211,18 @@ intakeIndexColors[2] = 0;
                 }
 
                 else if (intakeIndexColors[1] == 2){
+                    turnRevolverClockwise();
+
                     launchArtifact();
                     launchedArtifacts += 1;
-                    turnRevolverClockwise();
                 }
 
 
                 else if (intakeIndexColors[0] == 2){
+                    turnRevolverCounterClockwise();
                     launchArtifact();
                     launchedArtifacts += 1;
-                    turnRevolverCounterClockwise();
+
                 }
             }
 
@@ -245,11 +249,12 @@ intakeIndexColors[2] = 0;
 
 
     public void intakeMotif(){
-/*
+
         NormalizedRGBA colors= colorSensor.getNormalizedColors();
         colorSensor.setGain(3);
-*/
-        //    Color.colorToHSV(colors.toColor(), hsvValues);
+        intakeMotor.setPower(1);
+
+        Color.colorToHSV(colors.toColor(), hsvValues);
 
 
 
@@ -263,15 +268,19 @@ intakeIndexColors[2] = 0;
         //   telemetry.addData("blue",colors.blue);
 
 
-                /*if (hsvValues[0] > 190 && hsvValues[0] < 255) {
+                if (hsvValues[0] > 190 && hsvValues[0] < 255) {
                     telemetry.addData("purple", 2);
-                    //RGB.setPosition(0.7);
+                    intakeIndexColors[0] = 1;
+                    turnRevolverClockwise();
+
 
 
                 } else if (hsvValues[0] > 120 && hsvValues[0] < 170) {
 
                     telemetry.addData("green", 1);
-                   // RGB.setPosition(0.45);
+                    intakeIndexColors[0] = 1;
+                    turnRevolverClockwise();
+
 
 
                 } else {
@@ -342,22 +351,28 @@ intakeIndexColors[2] = 0;
 
 
                 case 1:
-                    detectMotifMethod();
+
                     follower.followPath(launchMotifPreload);
                     if (!follower.isBusy()) {
                         launchMotif(id);
+                        setPathState(2);
                     }
-                    setPathState(2);
+
 
                 case 2:
                     follower.followPath(prepareMotifOneIntake);
-                    setPathState(3);
+                    if (!follower.isBusy()) {
+                        setPathState(3);
+                    }
 
                 case 3:
                     intakeMotif();
                     follower.followPath(intakeMotifOne);
-                    setPathState(4);
-
+                    follower.setMaxPower(0.3);
+                    intakeMotif();
+                    if (!follower.isBusy()) {
+                        setPathState(4);
+                    }
                 case 4:
                     follower.followPath(launchMotifOne);
                     launchMotif(id);
