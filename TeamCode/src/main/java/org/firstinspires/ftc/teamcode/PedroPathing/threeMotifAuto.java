@@ -1,8 +1,9 @@
-/*
+
 
 package org.firstinspires.ftc.teamcode.PedroPathing;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.opMode;
 import static org.firstinspires.ftc.teamcode.PedroPathing.Tuning.follower;
 
 import com.pedropathing.geometry.BezierLine;
@@ -41,7 +42,7 @@ public class threeMotifAuto extends LinearOpMode {
         motif 2 is pgp
         motif 3 is gpp
      */
-/*
+
 private int motif = 0;
     private Path scorePreload;
     private PathChain launchMotifPreload, prepareMotifOneIntake, intakeMotifOne, launchMotifOne, prepareMotifTwoIntake, intakeMotifTwo, launchMotifTwo;
@@ -178,14 +179,25 @@ private int motif = 0;
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "intake_motor");
+        waitForStart();
+        setPathState(0);
+        while (opModeIsActive()){
+            autonomousPathUpdate();
+            follower.update();
+        }
         //private final Pose startPose = new Pose(28.5, 128, Math.toRadians(90)); // Start Pose of our robot.
         //private final Pose scorePose1 = new Pose(35.37, 119.3, Math.toRadians(145)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
         //private final Pose leaveLaunchLine = new Pose(53, 57.8, Math.toRadians(145));
+        telemetry.addData("path state", pathState);
+        telemetry.addData("x", follower.getPose().getX());
+        telemetry.addData("y", follower.getPose().getY());
+        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.update();
 
 
 
 
-}
+    }
 
 
-    } */
+    }

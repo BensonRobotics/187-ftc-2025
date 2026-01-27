@@ -39,6 +39,8 @@ import static org.firstinspires.ftc.teamcode.configVars.WIGGLEFREQUENCY;
 
 import static java.lang.Math.abs;
 
+import android.graphics.Color;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -51,6 +53,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -106,6 +110,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private CRServo intakeServo;
     private Servo launcherServo;
 
+   // private NormalizedColorSensor colorSensor = null;
+
+
     Limelight3A limelight;
 
     @Override
@@ -119,9 +126,13 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
+        /*
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
+        limelight.start(); // This tells Limelight to start looking!
 
-        limelight.pipelineSwitch(2);
-
+        limelight.pipelineSwitch(3);
+*/
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
@@ -134,6 +145,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
         // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
+      //  colorSensor = hardwareMap.get(NormalizedColorSensor.class,"sensor_color");
+
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -173,7 +186,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         double rotX;
         double driveSpeedMult = fastDriveSpeed;
         double TPS = 2800;
-        boolean isOnBlue = false;
+        boolean isOnBlue = true;
         boolean allianceToggled = false;
         boolean driveModeToggled = false;
         boolean driveSpeedToggled = false;
@@ -190,17 +203,20 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         double launchServoInitialPos = 0;
         double launchServoEndPos = 1;
         double revolverTargetPosition = 0;
-
-
+        double limelightVelocityMult = 0;
+        double x = 0;
+        double y = 0;
         ElapsedTime timeSinceStart = new ElapsedTime();
         revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         revolverTargetPosition = 0;
         revolverMotor.setTargetPosition((int) revolverTargetPosition);
         revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         // run until the end of the match (driver presses STOP)
+        final float[] hsvValues = new float[3];
+
         while (opModeIsActive()) {
 
-            {
+/*
                 LLResult result = limelight.getLatestResult();
                 Pose3D botpose = result.getBotpose();
                 double tx = result.getTx();
@@ -208,19 +224,30 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 double ta = result.getTa();
                 double x = botpose.getPosition().x;
                 double y = botpose.getPosition().y;
-                distanceFromAprilTag = Math.sqrt(Math.pow(botpose.getPosition().x + 1.4, 2)
-                        + Math.pow(botpose.getPosition().y + 1.5, 2));
+                if (isOnBlue) {
+                    distanceFromAprilTag = Math.sqrt(Math.pow((botpose.getPosition().x + 1.825), 2)
+                            + Math.pow((botpose.getPosition().y + 1.825), 2));
+                }
+                else{
+                    distanceFromAprilTag = Math.sqrt(Math.pow((botpose.getPosition().x + 1.825), 2)
+                            + Math.pow((botpose.getPosition().y - 1.825), 2));
 
+                }
+                limelightVelocityMult = -0.08633489*Math.pow(distanceFromAprilTag, 3) + 0.398921 * Math.pow(distanceFromAprilTag, 2) - 0.250368;
                 telemetry.addData("x", x);
                 telemetry.addData("y", y);
                 telemetry.addData("Tx", tx);
                 telemetry.addData("Ty", ty);
                 telemetry.addData("Ta", ta);
                 telemetry.addData("distance From AprilTag", distanceFromAprilTag);
+                telemetry.addData("limelight velocity mult", limelightVelocityMult);
 
                 launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+*/
+         //   launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
-                if (gamepad1.b) {
+
+            if (gamepad1.b) {
                     revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     revolverTargetPosition = 0;
                     revolverMotor.setTargetPosition((int) revolverTargetPosition);
@@ -327,7 +354,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 } else if (gamepad1.right_trigger >= 0.5) {
 
                     launchMotor.setVelocity(TPS * FASTVELOCITYMULT);
-                } else {
+                } else if (gamepad1.dpad_down){
                     launchMotor.setVelocity(0);
                 }
 
@@ -355,6 +382,9 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
             }
 */
 
+                if (revolverMotor.isBusy()){
+                    launcherServo.setPosition((LAUNCHSERVOINIT));
+            }
 
                 if (gamepad1.x && isLauncherServoUp == true && !servoLauncherToggled) {
                     launcherServo.setPosition(LAUNCHSERVOINIT);
@@ -368,29 +398,65 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     servoLauncherToggled = false;
                 }
 
-                if (gamepad1.dpad_down && isOnBlue == true && !allianceToggled) {
-                    launcherServo.setPosition(LAUNCHSERVOINIT);
+
+         /*       NormalizedRGBA colors= colorSensor.getNormalizedColors();
+                colorSensor.setGain(3);
+*/
+        //    Color.colorToHSV(colors.toColor(), hsvValues);
+
+
+
+                //  telemetry.addData("1",slot1);
+                //  telemetry.addData("2",slot2);
+                //  telemetry.addData("3",slot3);
+                //telemetry.addData("h",hsvValues[0]);
+                //  telemetry.addData("v",hsvValues[1]);
+                //  telemetry.addData("red",colors.red);
+                //  telemetry.addData("green",colors.green);
+                //   telemetry.addData("blue",colors.blue);
+
+
+                /*if (hsvValues[0] > 190 && hsvValues[0] < 255) {
+                    telemetry.addData("purple", 2);
+                    //RGB.setPosition(0.7);
+
+
+                } else if (hsvValues[0] > 120 && hsvValues[0] < 170) {
+
+                    telemetry.addData("green", 1);
+                   // RGB.setPosition(0.45);
+
+
+                } else {
+
+                    telemetry.addData("no ball", 0);
+                  //  RGB.setPosition(0.3);
+
+                }
+/**/
+                if (gamepad1.back && isOnBlue == true && !allianceToggled) {
+
                     isOnBlue = false;
                     limelight.pipelineSwitch(2);
                     allianceToggled = true;
-                } else if (gamepad1.dpad_down && isLauncherServoUp == false && !allianceToggled) {
-                    launcherServo.setPosition(LAUNCHSERVOFINAL);
+                } else if (gamepad1.back && isOnBlue == false && !allianceToggled) {
+
                     isOnBlue = true;
                     limelight.pipelineSwitch(3);
                     allianceToggled = true;
-                } else if (!gamepad1.dpad_down) {
+                } else if (!gamepad1.back) {
                     allianceToggled = false;
                 }
 
 
-                if (gamepad1.back && isFieldCentricModeOn == true && !driveModeToggled) {
+                if (gamepad1.left_stick_button && isFieldCentricModeOn == true && !driveModeToggled) {
 
                     isFieldCentricModeOn = false;
                     driveModeToggled = true;
-                } else if (gamepad1.back && isFieldCentricModeOn == false && !driveModeToggled) {
+                } else if (gamepad1.left_stick_button && isFieldCentricModeOn == false && !driveModeToggled) {
                     isFieldCentricModeOn = true;
                     driveModeToggled = true;
-                } else if (!gamepad1.back) {
+                } else if (!gamepad1.left_stick_button) {
                     driveModeToggled = false;
                 }
 
@@ -496,7 +562,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
                 telemetry.addData("Revolver Power", revolverMotor.getPower());
                 telemetry.update();
-            }
+
         }
     }
 
