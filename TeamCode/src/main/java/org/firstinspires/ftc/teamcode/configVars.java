@@ -13,6 +13,7 @@ public class configVars {
     public static double FASTVELOCITYMULT = 0.55;
     public static double SLOWVELOCITYMULT = 0.4;
 
+    public static double AUTOVELOCITYMULT = 0.4;
     public static double WIGGLEFREQUENCY  = 7;
 
     public static double WIGGLEAMPLITUDE  = 4;
