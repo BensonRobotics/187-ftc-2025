@@ -366,33 +366,43 @@ intakeIndexColors[2] = 0;
                     }
 
                 case 3:
-                    intakeMotif();
                     follower.followPath(intakeMotifOne);
                     follower.setMaxPower(0.3);
                     intakeMotif();
                     if (!follower.isBusy()) {
                         setPathState(4);
+                        follower.setMaxPower(1);
                     }
                 case 4:
                     follower.followPath(launchMotifOne);
-                    launchMotif(id);
-                    setPathState(5);
+                    if (!follower.isBusy()) {
+                        launchMotif(id);
+                        setPathState(2);
+                    }
+
 
                 case 5:
-                    follower.followPath(launchMotifOne);
-                    setPathState(6);
-                case 6:
                     follower.followPath(prepareMotifTwoIntake);
-                    setPathState(7);
+                    if (!follower.isBusy()) {
+                        setPathState(6);
+                    }
+
+                case 6:
+
+                    follower.followPath(intakeMotifTwo);
+                    intakeMotif();
+                    follower.setMaxPower(1);
+                    if (!follower.isBusy()) {
+                        setPathState(7);
+                        follower.setMaxPower(1);
+                    }
 
                 case 7:
-                    intakeMotif();
-                    follower.followPath(intakeMotifTwo);
-                    setPathState(8);
-
-                case 8:
                     follower.followPath(launchMotifTwo);
-                    launchMotif(id);
+                    if(!follower.isBusy()) {
+
+                        launchMotif(id);
+                    }
 
 
 
