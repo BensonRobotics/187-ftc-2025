@@ -13,6 +13,7 @@ import static java.lang.Thread.sleep;
 
 import android.graphics.Color;
 
+import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -46,6 +47,8 @@ public class threeMotifAuto extends OpMode {
     //indexes start at the intake and add 1 clockwise
     int[] intakeIndexColors = {1, 1, 2};
 
+    private Follower follower;
+    private Timer pathTimer, actionTimer, opmodeTimer;
 
     int TPS = 2800;
     private DcMotor leftFrontDrive = null;
@@ -75,7 +78,7 @@ public class threeMotifAuto extends OpMode {
         motif 3 is gpp
      */
 
-    float[] hsvValues;
+    final float[] hsvValues = new float[3];
 
 int launchedArtifacts = 0;
     private Path scorePreload;
@@ -183,6 +186,7 @@ intakeIndexColors[2] = 0;
     //1 for pgp
     //2 for ppg
     public void launchMotifShell(int greenThreshold){
+        launchedArtifacts = 0;
         while (launchedArtifacts < 3) {
             //launches purple
             if (launchedArtifacts != greenThreshold) {
@@ -229,22 +233,24 @@ intakeIndexColors[2] = 0;
         }
 
     }
-    public void launchMotif(int detected_id){
+    public void launchMotif(int detected_id) {
 
         int launchedArtifacts = 0;
         //purple purple green
-        if (detected_id == 21){
-            launchMotifShell(2);
-            }
-
-        //pgp
-        else if(detected_id == 22){
-            launchMotifShell(1);
-        }
-        else if (detected_id == 23){
+        if (detected_id == 21) {
             launchMotifShell(0);
         }
+
+        //pgp
+        else if (detected_id == 22) {
+            launchMotifShell(1);
+        } else if (detected_id == 23) {
+            launchMotifShell(2);
+        } else {
+            launchMotifShell(0);
+
         }
+    }
         //launches the motif
 
 
@@ -253,7 +259,6 @@ intakeIndexColors[2] = 0;
         NormalizedRGBA colors= colorSensor.getNormalizedColors();
         colorSensor.setGain(3);
         intakeMotor.setPower(1);
-
         Color.colorToHSV(colors.toColor(), hsvValues);
 
 
@@ -261,17 +266,17 @@ intakeIndexColors[2] = 0;
         //  telemetry.addData("1",slot1);
         //  telemetry.addData("2",slot2);
         //  telemetry.addData("3",slot3);
-        //telemetry.addData("h",hsvValues[0]);
-        //  telemetry.addData("v",hsvValues[1]);
-        //  telemetry.addData("red",colors.red);
-        //  telemetry.addData("green",colors.green);
-        //   telemetry.addData("blue",colors.blue);
+        telemetry.addData("h",hsvValues[0]);
+          telemetry.addData("v",hsvValues[1]);
+          telemetry.addData("red",colors.red);
+          telemetry.addData("green",colors.green);
+           telemetry.addData("blue",colors.blue);
 
 
                 if (hsvValues[0] > 190 && hsvValues[0] < 255) {
                     telemetry.addData("purple", 2);
                     intakeIndexColors[0] = 1;
-                    turnRevolverClockwise();
+                    turnRevolverCounterClockwise();
 
 
 
@@ -279,7 +284,7 @@ intakeIndexColors[2] = 0;
 
                     telemetry.addData("green", 1);
                     intakeIndexColors[0] = 1;
-                    turnRevolverClockwise();
+                    turnRevolverCounterClockwise();
 
 
 
@@ -298,12 +303,12 @@ intakeIndexColors[2] = 0;
 
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
-            List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
-            for (LLResultTypes.FiducialResult fiducial : fiducials) {
+            LLResultTypes.FiducialResult fiducial = result.getFiducialResults().get(0);
+
                 id = fiducial.getFiducialId(); // The ID number of the fiducial
                 telemetry.addData("Fiducial: ", id);
 
-            }
+
 
 
         } else {
@@ -339,78 +344,99 @@ intakeIndexColors[2] = 0;
             //the state doesn't automatically wait for the path to finish
             switch(pathState){
                 case 0:
-                    follower.followPath(scorePreload);
+                    follower.followPath(scorePreload, true);
+                    setPathState(1);
+                    break;
+                case 1:
+
                     //detects motif
                     limelightDetectTag();
 
                     if (!follower.isBusy() && id != 0) {
-
-                        setPathState(1);
+                        //follower.followPath(launchMotifPreload , true);
+                        follower.getCurrentPath().setConstantHeadingInterpolation(launchMotifPose.getHeading());
+                        setPathState(2);
                     }
                     break;
 
 
-                case 1:
-
-                    follower.followPath(launchMotifPreload);
-                    if (!follower.isBusy()) {
-                        launchMotif(id);
-                        setPathState(2);
-                    }
-
-
                 case 2:
-                    follower.followPath(prepareMotifOneIntake);
+
+                    launchArtifact();
+
                     if (!follower.isBusy()) {
+                       // launchMotif(0);
+                        follower.followPath(prepareMotifOneIntake, true);
                         setPathState(3);
                     }
 
+                    break;
                 case 3:
-                    follower.followPath(intakeMotifOne);
-                    follower.setMaxPower(0.3);
+
+                    if (!follower.isBusy()) {
+                        follower.followPath(intakeMotifOne, true);
+                        follower.setMaxPower(0.3);
+
+                        setPathState(4);
+                    }
+                    break;
+                case 4:
+
                     intakeMotif();
                     if (!follower.isBusy()) {
-                        setPathState(4);
+                        follower.followPath(launchMotifOne, true);
                         follower.setMaxPower(1);
+                        setPathState(5);
                     }
-                case 4:
-                    follower.followPath(launchMotifOne);
-                    if (!follower.isBusy()) {
-                        launchMotif(id);
-                        setPathState(2);
-                    }
-
+                    break;
 
                 case 5:
-                    follower.followPath(prepareMotifTwoIntake);
                     if (!follower.isBusy()) {
+                        launchMotif(id);
+                        follower.followPath(prepareMotifTwoIntake, true);
                         setPathState(6);
                     }
+                    break;
+
 
                 case 6:
 
-                    follower.followPath(intakeMotifTwo);
-                    intakeMotif();
-                    follower.setMaxPower(1);
                     if (!follower.isBusy()) {
+                        follower.setMaxPower(1);
+
+                        follower.followPath(intakeMotifTwo, true);
                         setPathState(7);
+                    }
+                    break;
+                case 7:
+
+
+                    intakeMotif();
+                    if (!follower.isBusy()) {
+                        follower.followPath(launchMotifTwo, true);
+
+                        setPathState(8);
                         follower.setMaxPower(1);
                     }
-
-                case 7:
-                    follower.followPath(launchMotifTwo);
+                    break;
+                case 8:
                     if(!follower.isBusy()) {
 
                         launchMotif(id);
                     }
-
+                    break;
 
 
 
             }
         }
-
+    @Override
     public void init() {
+
+
+        pathTimer = new Timer();
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
 
 
         leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
@@ -419,7 +445,7 @@ intakeIndexColors[2] = 0;
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "intake_motor");
-        launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+       // launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
@@ -432,17 +458,23 @@ intakeIndexColors[2] = 0;
         colorSensor = hardwareMap.get(NormalizedColorSensor .class,"sensor_color");
         launchedArtifacts = 0;
         follower = Constants.createFollower(hardwareMap);
+        colorSensor.setGain(3);
+
         buildPaths();
         follower.setStartingPose(startPose);
 
 
     }
+    @Override
 
     public void start() {
         setPathState(0);
+        launcherServo.setPosition(LAUNCHSERVOINIT);
         launchMotor.setVelocity(TPS * AUTOVELOCITYMULT);
     }
-        public void loop() {
+    @Override
+
+    public void loop() {
             //makes state machine run constantly
             autonomousPathUpdate();
             //detects if the robot is following the path
