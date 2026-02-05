@@ -21,4 +21,6 @@ public class configVars {
 
     public static double LAUNCHSERVOFINAL = 0.4;
 
+    public static double SERVOTIMERTHRESHOLD = 750;
+
 }

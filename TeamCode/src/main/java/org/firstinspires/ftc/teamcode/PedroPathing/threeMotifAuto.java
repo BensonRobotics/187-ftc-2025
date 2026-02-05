@@ -8,6 +8,7 @@ import static org.firstinspires.ftc.teamcode.PedroPathing.Tuning.follower;
 import static org.firstinspires.ftc.teamcode.configVars.AUTOVELOCITYMULT;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOFINAL;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
+import static org.firstinspires.ftc.teamcode.configVars.SERVOTIMERTHRESHOLD;
 
 import static java.lang.Thread.sleep;
 
@@ -48,7 +49,7 @@ public class threeMotifAuto extends OpMode {
     int[] intakeIndexColors = {1, 1, 2};
 
     private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
+    private Timer pathTimer, actionTimer, opmodeTimer, servoTimer;
 
     int TPS = 2800;
     private DcMotor leftFrontDrive = null;
@@ -71,6 +72,12 @@ public class threeMotifAuto extends OpMode {
     private final Pose IntakeMotifTwoPose = new Pose(29.302325581395348, 60.06976744186046, Math.toRadians(0));
     private int pathState;
     private double revolverTargetPosition = 0;
+
+    private boolean isServoPositionSetYet = false;
+    private boolean isServoUpYet = false;
+    private boolean isServoDownYet = false;
+
+    private boolean isLaunchDoneYet = false;
     Limelight3A limelight;
     /*
         motif 1 is ppg
@@ -141,18 +148,39 @@ int launchedArtifacts = 0;
 
 
     public void launchArtifact(){
-        launchMotor.setVelocity(TPS * AUTOVELOCITYMULT );
-
-        while (launcherServo.getPosition() < LAUNCHSERVOFINAL){
-            launcherServo.setPosition(LAUNCHSERVOFINAL);
+        launchMotor.setVelocity(TPS * AUTOVELOCITYMULT);
+        if (isServoPositionSetYet) {
+            isServoPositionSetYet = false;
+            launcherServo.setPosition(0.4);
+            servoTimer.resetTimer();
         }
-intakeIndexColors[2] = 0;
-        while (launcherServo.getPosition() > LAUNCHSERVOINIT){
-            launcherServo.setPosition(LAUNCHSERVOINIT);
+        if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && !isServoUpYet){
+            servoTimer.resetTimer();
+            isServoUpYet = true;
+            launcherServo.setPosition(0);
+            intakeIndexColors[2] = 0;
+
+
+
         }
 
+        if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && isServoUpYet){
+            isServoDownYet = true;
+            launchedArtifacts += 1;
+            resetLaunchVars();
 
 
+        }
+        telemetry.addData("ServoPos", launcherServo.getPosition());
+        telemetry.addData("isServoUpYetVar", isServoUpYet);
+        telemetry.addData("isServoDownYetVar", isServoDownYet);
+        telemetry.addData("isServoPositionYetVar", isServoPositionSetYet);
+
+
+        //telemetry.addData("servoTarget", launcherServo.pos);
+        telemetry.update();
+
+        isLaunchDoneYet = true;
     }
 
     public void turnRevolverClockwise(){
@@ -185,31 +213,47 @@ intakeIndexColors[2] = 0;
     //0 for gpp
     //1 for pgp
     //2 for ppg
+
+    public void resetLaunchVars(){
+        isServoDownYet = false;
+        isServoUpYet = false;
+        isServoPositionSetYet = true;
+    }
     public void launchMotifShell(int greenThreshold){
-        launchedArtifacts = 0;
-        while (launchedArtifacts < 3) {
+
+        if (launchedArtifacts == 3){
+            isLaunchDoneYet = true;
+            launchedArtifacts = 0;
+        }
+
             //launches purple
             if (launchedArtifacts != greenThreshold) {
                 if (intakeIndexColors[2] == 1) {
-                    launchArtifact();
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
+
                     launchedArtifacts += 1;
                 } else if (intakeIndexColors[1] == 1) {
                     turnRevolverClockwise();
-                    launchArtifact();
-                    launchedArtifacts += 1;
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
 
                 } else if (intakeIndexColors[0] == 1) {
                     turnRevolverCounterClockwise();
-                    launchArtifact();
-                    launchedArtifacts += 1;
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
 
                 }
             }
             else if (launchedArtifacts == greenThreshold){
 
                 if (intakeIndexColors[2] == 2) {
-                    launchArtifact();
-                    launchedArtifacts += 1;
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
 
 
                 }
@@ -217,18 +261,20 @@ intakeIndexColors[2] = 0;
                 else if (intakeIndexColors[1] == 2){
                     turnRevolverClockwise();
 
-                    launchArtifact();
-                    launchedArtifacts += 1;
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
                 }
 
 
                 else if (intakeIndexColors[0] == 2){
                     turnRevolverCounterClockwise();
-                    launchArtifact();
-                    launchedArtifacts += 1;
+                    if (!isServoDownYet) {
+                        launchArtifact();
+                    }
 
                 }
-            }
+
 
         }
 
@@ -362,12 +408,15 @@ intakeIndexColors[2] = 0;
 
                 case 2:
 
-                    launchArtifact();
 
                     if (!follower.isBusy()) {
-                       // launchMotif(0);
-                        follower.followPath(prepareMotifOneIntake, true);
-                        setPathState(3);
+                       //launchMotif(id);
+                        launchMotif(id);
+                      if (isLaunchDoneYet) {
+                            resetLaunchVars();
+                            follower.followPath(prepareMotifOneIntake, true);
+                            setPathState(3);
+                        }
                     }
 
                     break;
@@ -393,6 +442,11 @@ intakeIndexColors[2] = 0;
                 case 5:
                     if (!follower.isBusy()) {
                         launchMotif(id);
+                        if (isLaunchDoneYet) {
+                            resetLaunchVars();
+                            follower.followPath(prepareMotifOneIntake, true);
+                            setPathState(3);
+                        }
                         follower.followPath(prepareMotifTwoIntake, true);
                         setPathState(6);
                     }
@@ -436,22 +490,23 @@ intakeIndexColors[2] = 0;
 
         pathTimer = new Timer();
         opmodeTimer = new Timer();
+        servoTimer = new Timer();
         opmodeTimer.resetTimer();
 
-
+        resetLaunchVars();
         leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
-        launchMotor = hardwareMap.get(DcMotorEx.class, "intake_motor");
+        launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
        // launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
         limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
         limelight.start(); // This tells Limelight to start looking!
-
+        isLaunchDoneYet = false;
         limelight.pipelineSwitch(4);
         int id = 0;
         revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -468,9 +523,10 @@ intakeIndexColors[2] = 0;
     @Override
 
     public void start() {
-        setPathState(0);
         launcherServo.setPosition(LAUNCHSERVOINIT);
         launchMotor.setVelocity(TPS * AUTOVELOCITYMULT);
+
+        setPathState(0);
     }
     @Override
 
@@ -488,6 +544,11 @@ intakeIndexColors[2] = 0;
             telemetry.addData("y", follower.getPose().getY());
             telemetry.addData("heading", follower.getPose().getHeading());
             telemetry.update();
+
+
+        }
+        @Override
+        public void stop(){
 
 
         }
