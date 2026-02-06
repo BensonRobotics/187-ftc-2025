@@ -23,4 +23,10 @@ public class configVars {
 
     public static double SERVOTIMERTHRESHOLD = 750;
 
+    public static double PURPLELOWTHRESHOLD = 190;
+    public static double PURPLEHIGHTHRESHOLD = 255;
+
+    public static double GREENLOWTHRESHOLD = 120;
+    public static double GREENHIGHTHRESHOLD = 170;
+
 }

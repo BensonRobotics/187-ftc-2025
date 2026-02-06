@@ -6,8 +6,12 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.har
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.opMode;
 import static org.firstinspires.ftc.teamcode.PedroPathing.Tuning.follower;
 import static org.firstinspires.ftc.teamcode.configVars.AUTOVELOCITYMULT;
+import static org.firstinspires.ftc.teamcode.configVars.GREENHIGHTHRESHOLD;
+import static org.firstinspires.ftc.teamcode.configVars.GREENLOWTHRESHOLD;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOFINAL;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
+import static org.firstinspires.ftc.teamcode.configVars.PURPLEHIGHTHRESHOLD;
+import static org.firstinspires.ftc.teamcode.configVars.PURPLELOWTHRESHOLD;
 import static org.firstinspires.ftc.teamcode.configVars.SERVOTIMERTHRESHOLD;
 
 import static java.lang.Thread.sleep;
@@ -64,7 +68,7 @@ public class threeMotifAuto extends OpMode {
 
     //data for the path
     private final Pose startPose = new Pose(27.645169024214823, 132.4926876048909, Math.toRadians(55));
-    private final Pose detectMotifPose = new Pose(41.23255813953489, 121.3953488372093, Math.toRadians(55));
+    private final Pose detectMotifPose = new Pose(51.02325581395349, 111.9767441860465, Math.toRadians(55));
     private final Pose launchMotifPose = new Pose(41.23255813953489, 121.3953488372093, Math.toRadians(145));
     private final Pose MotifOnePose = new Pose(41.86046511627907, 83.30232558139534, Math.toRadians(0));
     private final Pose IntakeMotifOnePose = new Pose(28.465116279069765, 83.30232558139534, Math.toRadians(0));
@@ -73,11 +77,13 @@ public class threeMotifAuto extends OpMode {
     private int pathState;
     private double revolverTargetPosition = 0;
 
-    private boolean isServoPositionSetYet = false;
+    private boolean isServoPositionSetYet = true;
     private boolean isServoUpYet = false;
     private boolean isServoDownYet = false;
 
     private boolean isLaunchDoneYet = false;
+
+    private boolean isRevolverTurnedYet = false;
     Limelight3A limelight;
     /*
         motif 1 is ppg
@@ -154,20 +160,19 @@ int launchedArtifacts = 0;
             launcherServo.setPosition(0.4);
             servoTimer.resetTimer();
         }
-        if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && !isServoUpYet){
+        else if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && !isServoUpYet){
             servoTimer.resetTimer();
             isServoUpYet = true;
             launcherServo.setPosition(0);
-            intakeIndexColors[2] = 0;
 
 
 
         }
 
-        if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && isServoUpYet){
+        else if (servoTimer.getElapsedTime() > SERVOTIMERTHRESHOLD && isServoUpYet){
             isServoDownYet = true;
             launchedArtifacts += 1;
-            resetLaunchVars();
+            intakeIndexColors[2] = 0;
 
 
         }
@@ -176,21 +181,21 @@ int launchedArtifacts = 0;
         telemetry.addData("isServoDownYetVar", isServoDownYet);
         telemetry.addData("isServoPositionYetVar", isServoPositionSetYet);
 
+        telemetry.addData("intakeArray:", intakeIndexColors);
 
         //telemetry.addData("servoTarget", launcherServo.pos);
         telemetry.update();
 
-        isLaunchDoneYet = true;
+        //isLaunchDoneYet = true;
     }
 
     public void turnRevolverClockwise(){
         revolverTargetPosition += 537.7 / 3;
         revolverMotor.setTargetPosition((int) revolverTargetPosition);
         revolverMotor.setPower(1);
-        while (revolverMotor.isBusy()){
+        if(revolverMotor.isBusy()){
 
-            revolverMotor.setPower(1);
-
+            isRevolverTurnedYet = true;
         }
         shiftIntakeArrayRight();
 
@@ -200,10 +205,9 @@ int launchedArtifacts = 0;
         revolverTargetPosition -= 537.7 / 3;
         revolverMotor.setTargetPosition((int) revolverTargetPosition);
         revolverMotor.setPower(1);
-        while (revolverMotor.isBusy()){
+        if (revolverMotor.isBusy()){
 
-            revolverMotor.setPower(1);
-
+isRevolverTurnedYet = true;
         }
         shiftIntakeArrayLeft();
 
@@ -217,11 +221,18 @@ int launchedArtifacts = 0;
     public void resetLaunchVars(){
         isServoDownYet = false;
         isServoUpYet = false;
+        isLaunchDoneYet = false;
+        isRevolverTurnedYet = false;
         isServoPositionSetYet = true;
     }
     public void launchMotifShell(int greenThreshold){
+            telemetry.addData("launchedArtifacts", launchedArtifacts);
+            telemetry.addData("revolve power", revolverMotor.getPower());
+            telemetry.addData("revolve tgt pos", revolverMotor.getTargetPosition());
+        telemetry.addData("intakeArray:", intakeIndexColors);
 
-        if (launchedArtifacts == 3){
+        telemetry.update();
+        if (launchedArtifacts == 2){
             isLaunchDoneYet = true;
             launchedArtifacts = 0;
         }
@@ -232,20 +243,37 @@ int launchedArtifacts = 0;
                     if (!isServoDownYet) {
                         launchArtifact();
                     }
+                    else{
+                        resetLaunchVars();
+                    }
 
-                    launchedArtifacts += 1;
                 } else if (intakeIndexColors[1] == 1) {
-                    turnRevolverClockwise();
+                    if (!isRevolverTurnedYet){
+                        turnRevolverClockwise();
+                        //isRevolverTurnedYet = true;
+
+                    }
                     if (!isServoDownYet) {
                         launchArtifact();
+                    }
+                    else{
+                        resetLaunchVars();
+
                     }
 
                 } else if (intakeIndexColors[0] == 1) {
-                    turnRevolverCounterClockwise();
+                    if (!isRevolverTurnedYet){
+                        turnRevolverCounterClockwise();
+                       // isRevolverTurnedYet = true;
+
+                    }
                     if (!isServoDownYet) {
                         launchArtifact();
                     }
+                    else{
+                        resetLaunchVars();
 
+                    }
                 }
             }
             else if (launchedArtifacts == greenThreshold){
@@ -254,23 +282,42 @@ int launchedArtifacts = 0;
                     if (!isServoDownYet) {
                         launchArtifact();
                     }
+                    else{
+                        resetLaunchVars();
+                    }
 
 
                 }
 
                 else if (intakeIndexColors[1] == 2){
-                    turnRevolverClockwise();
+
+                    if (!isRevolverTurnedYet){
+                        turnRevolverClockwise();
+                        //isRevolverTurnedYet = true;
+
+                    }
 
                     if (!isServoDownYet) {
                         launchArtifact();
+                    }
+                    else{
+                        resetLaunchVars();
                     }
                 }
 
 
                 else if (intakeIndexColors[0] == 2){
-                    turnRevolverCounterClockwise();
+                    if (!isRevolverTurnedYet){
+                        turnRevolverCounterClockwise();
+                       // isRevolverTurnedYet = true;
+
+                    }
+
                     if (!isServoDownYet) {
                         launchArtifact();
+                    }
+                    else{
+                        resetLaunchVars();
                     }
 
                 }
@@ -281,7 +328,7 @@ int launchedArtifacts = 0;
     }
     public void launchMotif(int detected_id) {
 
-        int launchedArtifacts = 0;
+        //int launchedArtifacts = 0;
         //purple purple green
         if (detected_id == 21) {
             launchMotifShell(0);
@@ -319,19 +366,21 @@ int launchedArtifacts = 0;
            telemetry.addData("blue",colors.blue);
 
 
-                if (hsvValues[0] > 190 && hsvValues[0] < 255) {
+                if (hsvValues[0] > PURPLELOWTHRESHOLD && hsvValues[0] < PURPLEHIGHTHRESHOLD) {
                     telemetry.addData("purple", 2);
                     intakeIndexColors[0] = 1;
-                    turnRevolverCounterClockwise();
+                    if (!isRevolverTurnedYet) {
+                        turnRevolverCounterClockwise();
+                    }
 
 
-
-                } else if (hsvValues[0] > 120 && hsvValues[0] < 170) {
+                } else if (hsvValues[0] > GREENLOWTHRESHOLD && hsvValues[0] < GREENHIGHTHRESHOLD) {
 
                     telemetry.addData("green", 1);
-                    intakeIndexColors[0] = 1;
-                    turnRevolverCounterClockwise();
-
+                    intakeIndexColors[0] = 2;
+                    if (!isRevolverTurnedYet) {
+                        turnRevolverCounterClockwise();
+                    }
 
 
                 } else {
@@ -391,6 +440,7 @@ int launchedArtifacts = 0;
             switch(pathState){
                 case 0:
                     follower.followPath(scorePreload, true);
+
                     setPathState(1);
                     break;
                 case 1:
@@ -399,8 +449,9 @@ int launchedArtifacts = 0;
                     limelightDetectTag();
 
                     if (!follower.isBusy() && id != 0) {
-                        //follower.followPath(launchMotifPreload , true);
-                        follower.getCurrentPath().setConstantHeadingInterpolation(launchMotifPose.getHeading());
+                        follower.followPath(launchMotifPreload , true);
+                        //if this doesnt work set heading constraint to low number
+                        //follower.getCurrentPath().setLinearHeadingInterpolation(detectMotifPose.getHeading(), launchMotifPose.getHeading());
                         setPathState(2);
                     }
                     break;
@@ -424,7 +475,7 @@ int launchedArtifacts = 0;
 
                     if (!follower.isBusy()) {
                         follower.followPath(intakeMotifOne, true);
-                        follower.setMaxPower(0.3);
+                        follower.setMaxPower(0.2);
 
                         setPathState(4);
                     }
@@ -447,7 +498,6 @@ int launchedArtifacts = 0;
                             follower.followPath(prepareMotifOneIntake, true);
                             setPathState(3);
                         }
-                        follower.followPath(prepareMotifTwoIntake, true);
                         setPathState(6);
                     }
                     break;
@@ -477,6 +527,10 @@ int launchedArtifacts = 0;
                     if(!follower.isBusy()) {
 
                         launchMotif(id);
+                        if (isLaunchDoneYet) {
+                            resetLaunchVars();
+
+                        }
                     }
                     break;
 
@@ -514,7 +568,8 @@ int launchedArtifacts = 0;
         launchedArtifacts = 0;
         follower = Constants.createFollower(hardwareMap);
         colorSensor.setGain(3);
-
+revolverMotor.setTargetPosition(0);
+revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         buildPaths();
         follower.setStartingPose(startPose);
 
@@ -543,7 +598,9 @@ int launchedArtifacts = 0;
             telemetry.addData("x", follower.getPose().getX());
             telemetry.addData("y", follower.getPose().getY());
             telemetry.addData("heading", follower.getPose().getHeading());
-            telemetry.update();
+            telemetry.addData("intakeArray:", intakeIndexColors);
+
+        telemetry.update();
 
 
         }

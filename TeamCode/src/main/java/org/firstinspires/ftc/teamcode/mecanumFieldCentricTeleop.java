@@ -30,8 +30,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.configVars.FASTVELOCITYMULT;
+import static org.firstinspires.ftc.teamcode.configVars.GREENHIGHTHRESHOLD;
+import static org.firstinspires.ftc.teamcode.configVars.GREENLOWTHRESHOLD;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOFINAL;
 import static org.firstinspires.ftc.teamcode.configVars.LAUNCHSERVOINIT;
+import static org.firstinspires.ftc.teamcode.configVars.PURPLEHIGHTHRESHOLD;
+import static org.firstinspires.ftc.teamcode.configVars.PURPLELOWTHRESHOLD;
 import static org.firstinspires.ftc.teamcode.configVars.SLOWVELOCITYMULT;
 import static org.firstinspires.ftc.teamcode.configVars.VELOCITYMULT;
 import static org.firstinspires.ftc.teamcode.configVars.WIGGLEAMPLITUDE;
@@ -110,15 +114,40 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     private CRServo intakeServo;
     private Servo launcherServo;
 
+    private Servo RGB;
 
+    int[] intakeIndexColors = {0, 0, 0};
 
-   // private NormalizedColorSensor colorSensor = null;
+    private NormalizedColorSensor colorSensor = null;
 
 
     Limelight3A limelight;
 
+
+    public void shiftIntakeArrayRight(){
+
+        int zeroOld = intakeIndexColors[0];
+        int oneOld = intakeIndexColors[1];
+        int twoOld = intakeIndexColors[2];
+
+        intakeIndexColors[0] = twoOld;
+        intakeIndexColors[1] = zeroOld;
+        intakeIndexColors[2] = oneOld;
+    }
+
+    public void shiftIntakeArrayLeft(){
+
+        int zeroOld = intakeIndexColors[0];
+        int oneOld = intakeIndexColors[1];
+        int twoOld = intakeIndexColors[2];
+
+        intakeIndexColors[0] = oneOld;
+        intakeIndexColors[1] = twoOld;
+        intakeIndexColors[2] = zeroOld;
+    }
     @Override
     public void runOpMode() {
+
         IMU imu;
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -147,7 +176,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
         // intakeServo = hardwareMap.get(CRServo.class, "intake_servo");
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
-      //  colorSensor = hardwareMap.get(NormalizedColorSensor.class,"sensor_color");
+        RGB = hardwareMap.get(Servo.class, "led_light");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class,"sensor_color");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -208,12 +238,16 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         double limelightVelocityMult = 0;
         double x = 0;
         double y = 0;
+
+
         ElapsedTime timeSinceStart = new ElapsedTime();
         revolverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         revolverTargetPosition = 0;
         revolverMotor.setTargetPosition((int) revolverTargetPosition);
         revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        // run until the end of the match (driver presses STOP)
+       // NormalizedRGBA colors= colorSensor.getNormalizedColors();
+        colorSensor.setGain(3);
+
         final float[] hsvValues = new float[3];
 
         while (opModeIsActive()) {
@@ -278,11 +312,43 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 intakeServo.setPower(0);
             }
 
-
-
 */
 
+            if (intakeIndexColors[2] == 1){
+                RGB.setPosition(0.7);
 
+
+            }
+            else if (intakeIndexColors[2] == 2){
+                RGB.setPosition(0.45);
+            }
+
+            else{
+                RGB.setPosition(0.3);
+            }
+                NormalizedRGBA colors= colorSensor.getNormalizedColors();
+                colorSensor.setGain(3);
+
+               Color.colorToHSV(colors.toColor(), hsvValues);
+
+
+
+            if (hsvValues[0] > PURPLELOWTHRESHOLD && hsvValues[0] < PURPLEHIGHTHRESHOLD) {
+                telemetry.addData("purple", 2);
+                RGB.setPosition(0.7);
+
+
+            } else if (hsvValues[0] > GREENLOWTHRESHOLD && hsvValues[0] < GREENHIGHTHRESHOLD) {
+
+                telemetry.addData("green", 1);
+                RGB.setPosition(0.45);
+
+
+            } else {
+
+                telemetry.addData("no ball", 0);
+                RGB.setPosition(0.3);
+            }
             /*
             if (launcherServo.getPosition() > LAUNCHSERVOINIT){
                 revolverMotor.setPower(0);
@@ -320,6 +386,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     revolverMotor.setTargetPosition((int) revolverTargetPosition);
                     revolverMotor.setPower(1);
                     isRevolverSlowModeOn = false;
+                    shiftIntakeArrayRight();
                     revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
                 } else if (gamepad1.dpad_left && revolverMotor.isBusy() == false) {
@@ -327,6 +394,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     revolverMotor.setTargetPosition((int) revolverTargetPosition);
                     revolverMotor.setPower(-1);
                     isRevolverSlowModeOn = false;
+                    shiftIntakeArrayLeft();
                     revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
@@ -563,6 +631,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
                 telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
                 telemetry.addData("Revolver Power", revolverMotor.getPower());
+                telemetry.addData("intakeArray:", intakeIndexColors);
                 telemetry.update();
 
         }
