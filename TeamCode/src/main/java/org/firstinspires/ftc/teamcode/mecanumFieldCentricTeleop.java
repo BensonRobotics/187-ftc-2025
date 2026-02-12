@@ -148,6 +148,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+
         IMU imu;
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -247,6 +248,8 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
         revolverMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
        // NormalizedRGBA colors= colorSensor.getNormalizedColors();
         colorSensor.setGain(3);
+        launchMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
 
         final float[] hsvValues = new float[3];
 
@@ -314,13 +317,21 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
 */
 
+            if (revolverMotor.isBusy()){
+
+               // RGB.setPosition(0.9);
+            }
+            else{
+                //RGB.setPosition(0.5);
+            }
+
             if (intakeIndexColors[2] == 1){
                 RGB.setPosition(0.7);
 
 
             }
             else if (intakeIndexColors[2] == 2){
-                RGB.setPosition(0.45);
+               RGB.setPosition(0.45);
             }
 
             else{
@@ -331,24 +342,26 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
 
                Color.colorToHSV(colors.toColor(), hsvValues);
 
+if (!revolverMotor.isBusy()) {
+    if (hsvValues[0] > PURPLELOWTHRESHOLD && hsvValues[0] < PURPLEHIGHTHRESHOLD) {
+        telemetry.addData("purple", 2);
+        intakeIndexColors[0] = 1;
+        //RGB.setPosition(0.7);
 
 
-            if (hsvValues[0] > PURPLELOWTHRESHOLD && hsvValues[0] < PURPLEHIGHTHRESHOLD) {
-                telemetry.addData("purple", 2);
-                RGB.setPosition(0.7);
+    } else if (hsvValues[0] > GREENLOWTHRESHOLD && hsvValues[0] < GREENHIGHTHRESHOLD) {
+
+        telemetry.addData("green", 1);
+        intakeIndexColors[0] = 2;
+        // RGB.setPosition(0.45);
 
 
-            } else if (hsvValues[0] > GREENLOWTHRESHOLD && hsvValues[0] < GREENHIGHTHRESHOLD) {
+    } else {
 
-                telemetry.addData("green", 1);
-                RGB.setPosition(0.45);
-
-
-            } else {
-
-                telemetry.addData("no ball", 0);
-                RGB.setPosition(0.3);
-            }
+        telemetry.addData("no ball", 0);
+        //  RGB.setPosition(0.3);
+    }
+}
             /*
             if (launcherServo.getPosition() > LAUNCHSERVOINIT){
                 revolverMotor.setPower(0);
@@ -386,7 +399,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     revolverMotor.setTargetPosition((int) revolverTargetPosition);
                     revolverMotor.setPower(1);
                     isRevolverSlowModeOn = false;
-                    shiftIntakeArrayRight();
+                    shiftIntakeArrayLeft();
                     revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
                 } else if (gamepad1.dpad_left && revolverMotor.isBusy() == false) {
@@ -394,7 +407,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     revolverMotor.setTargetPosition((int) revolverTargetPosition);
                     revolverMotor.setPower(-1);
                     isRevolverSlowModeOn = false;
-                    shiftIntakeArrayLeft();
+                    shiftIntakeArrayRight();
                     revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
@@ -462,6 +475,7 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                     servoLauncherToggled = true;
                 } else if (gamepad1.x && isLauncherServoUp == false && !servoLauncherToggled) {
                     launcherServo.setPosition(LAUNCHSERVOFINAL);
+                    intakeIndexColors[2] = 0;
                     isLauncherServoUp = true;
                     servoLauncherToggled = true;
                 } else if (!gamepad1.x) {
@@ -631,8 +645,11 @@ public class mecanumFieldCentricTeleop extends LinearOpMode {
                 telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
                 telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
                 telemetry.addData("Revolver Power", revolverMotor.getPower());
-                telemetry.addData("intakeArray:", intakeIndexColors);
-                telemetry.update();
+                telemetry.addData("intakeArray 0:", intakeIndexColors[0]);
+            telemetry.addData("intakeArray 1:", intakeIndexColors[1]);
+            telemetry.addData("intakeArray 2:", intakeIndexColors[2]);
+
+            telemetry.update();
 
         }
     }

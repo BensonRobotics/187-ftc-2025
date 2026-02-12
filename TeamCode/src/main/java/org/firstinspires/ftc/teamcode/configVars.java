@@ -23,10 +23,19 @@ public class configVars {
 
     public static double SERVOTIMERTHRESHOLD = 750;
 
-    public static double PURPLELOWTHRESHOLD = 190;
-    public static double PURPLEHIGHTHRESHOLD = 255;
+    public static double PURPLELOWTHRESHOLD = 230;
+    public static double PURPLEHIGHTHRESHOLD = 305;
 
     public static double GREENLOWTHRESHOLD = 120;
     public static double GREENHIGHTHRESHOLD = 170;
 
+    public static double PURPLELOWTHRESHOLDAUTO = 230;
+    public static double PURPLEHIGHTHRESHOLDAUTO = 305;
+
+    public static double GREENLOWTHRESHOLDAUTO = 120;
+    public static double GREENHIGHTHRESHOLDAUTO = 170;
+
+
+    public static double AUTOREVOLVERSPEED = 0.3;
+    public static double REVOLVERTIMERTHRESHOLD = 2500;
 }

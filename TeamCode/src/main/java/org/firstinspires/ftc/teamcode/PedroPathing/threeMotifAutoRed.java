@@ -45,9 +45,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.List;
 
 
-@Autonomous(name = "PedroPathing 3 Motif Auto")
+@Autonomous(name = "PedroPathing 3 Motif Auto Red")
 
-public class threeMotifAuto extends OpMode {
+public class threeMotifAutoRed extends OpMode {
     //id 21 is gpp
     //id 22 is pgp
     //id 23 is ppg
@@ -72,18 +72,18 @@ public class threeMotifAuto extends OpMode {
     private DcMotorEx launchMotor = null;
 
     //data for the path
-    private final Pose startPose = new Pose(27.645169024214823, 132.4926876048909, Math.toRadians(55));
-    private final Pose detectMotifPose = new Pose(51.02325581395349, 111.9767441860465, Math.toRadians(55));
-    private final Pose launchMotifPose = new Pose(41.23255813953489, 121.3953488372093, Math.toRadians(145));
-    private final Pose MotifOnePose = new Pose(46.86046511627907, 88.30232558139534, Math.toRadians(0));
+    private final Pose startPose = new Pose(116.38935507072645, 132.4926876048909, Math.toRadians(125));
+    private final Pose detectMotifPose = new Pose(92.976744186, 111.9767441860465, Math.toRadians(125));
+    private final Pose launchMotifPose = new Pose(99.76744186, 118.3953488372093, Math.toRadians(35));
+    private final Pose MotifOnePose = new Pose(97.1395348837, 88.30232558139534, Math.toRadians(180));
 
-    private final Pose MotifOneControl = new Pose(78.54651162790698, 103.34883720930232);
-    private final Pose IntakeMotifOnePose = new Pose(24.465116279069765, 83.30232558139534, Math.toRadians(0));
+    private final Pose MotifOneControl = new Pose(65.4534883721, 103.34883720930232);
+    private final Pose IntakeMotifOnePose = new Pose(121.534883721, 83.30232558139534, Math.toRadians(0));
 
-    private final Pose MotifTwoControl = new Pose(78.54651162790698, 90.73255813953489);
+    private final Pose MotifTwoControl = new Pose(65.4534883721, 90.73255813953489);
 
-    private final Pose MotifTwoPose = new Pose(46.86046511627907, 60.06976744186046, Math.toRadians(0));
-    private final Pose IntakeMotifTwoPose = new Pose(24.302325581395348, 60.06976744186046, Math.toRadians(0));
+    private final Pose MotifTwoPose = new Pose(92.1395348837, 60.06976744186046, Math.toRadians(0));
+    private final Pose IntakeMotifTwoPose = new Pose(126.534883721, 60.06976744186046, Math.toRadians(0));
     private int pathState;
     private double revolverTargetPosition = 0;
 
@@ -106,7 +106,7 @@ public class threeMotifAuto extends OpMode {
 
     final float[] hsvValues = new float[3];
 
-int launchedArtifacts = 0;
+    int launchedArtifacts = 0;
     private Path scorePreload;
     private PathChain launchMotifPreload, prepareMotifOneIntake, intakeMotifOne, launchMotifOne, prepareMotifTwoIntake, intakeMotifTwo, launchMotifTwo;
 
@@ -114,7 +114,7 @@ int launchedArtifacts = 0;
     private void setPathState(int i) {
         pathState = i;
     }
-//builds paths
+    //builds paths
     public void buildPaths() {
 
         //path between start position and detecting motif
@@ -270,9 +270,9 @@ int launchedArtifacts = 0;
         isRevolverFirstCheck = false;
     }
     public void launchMotifShell(int greenThreshold){
-            telemetry.addData("launchedArtifacts", launchedArtifacts);
-            telemetry.addData("revolve power", revolverMotor.getPower());
-            telemetry.addData("revolve tgt pos", revolverMotor.getTargetPosition());
+        telemetry.addData("launchedArtifacts", launchedArtifacts);
+        telemetry.addData("revolve power", revolverMotor.getPower());
+        telemetry.addData("revolve tgt pos", revolverMotor.getTargetPosition());
         telemetry.addData("intakeArray 0:", intakeIndexColors[0]);
         telemetry.addData("intakeArray 1:", intakeIndexColors[1]);
         telemetry.addData("intakeArray 2:", intakeIndexColors[2]);
@@ -280,90 +280,90 @@ int launchedArtifacts = 0;
 
         telemetry.update();
 
-            //launches purple
-            if (launchedArtifacts != greenThreshold) {
-                if (intakeIndexColors[2] == 1) {
-                    if (!isServoDownYet) {
-                        launchArtifact();
-                    }
-                    else{
-                        resetLaunchVars();
-                    }
+        //launches purple
+        if (launchedArtifacts != greenThreshold) {
+            if (intakeIndexColors[2] == 1) {
+                if (!isServoDownYet) {
+                    launchArtifact();
+                }
+                else{
+                    resetLaunchVars();
+                }
 
-                } else if (intakeIndexColors[1] == 1) {
-                    if (!isRevolverTurnedYet){
-                        turnRevolverClockwise();
-                        //isRevolverTurnedYet = true;
+            } else if (intakeIndexColors[1] == 1) {
+                if (!isRevolverTurnedYet){
+                    turnRevolverClockwise();
+                    //isRevolverTurnedYet = true;
 
-                    }
-                    else if (!isServoDownYet && isRevolverTurnedYet) {
-                        launchArtifact();
-                    }
-                    else if (isServoDownYet && isRevolverTurnedYet){
-                        resetLaunchVars();
+                }
+                else if (!isServoDownYet && isRevolverTurnedYet) {
+                    launchArtifact();
+                }
+                else if (isServoDownYet && isRevolverTurnedYet){
+                    resetLaunchVars();
 
-                    }
+                }
 
-                } else if (intakeIndexColors[0] == 1) {
-                    if (!isRevolverTurnedYet){
-                        turnRevolverCounterClockwise();
-                       // isRevolverTurnedYet = true;
+            } else if (intakeIndexColors[0] == 1) {
+                if (!isRevolverTurnedYet){
+                    turnRevolverCounterClockwise();
+                    // isRevolverTurnedYet = true;
 
-                    }
-                    else if (!isServoDownYet && isRevolverTurnedYet) {
-                        launchArtifact();
-                    }
-                    else if (isServoDownYet && isRevolverTurnedYet){
-                        resetLaunchVars();
+                }
+                else if (!isServoDownYet && isRevolverTurnedYet) {
+                    launchArtifact();
+                }
+                else if (isServoDownYet && isRevolverTurnedYet){
+                    resetLaunchVars();
 
-                    }
                 }
             }
-            else if (launchedArtifacts == greenThreshold){
+        }
+        else if (launchedArtifacts == greenThreshold){
 
-                if (intakeIndexColors[2] == 2) {
-                    if (!isServoDownYet) {
-                        launchArtifact();
-                    }
-                    else{
-                        resetLaunchVars();
-                    }
-
-
+            if (intakeIndexColors[2] == 2) {
+                if (!isServoDownYet) {
+                    launchArtifact();
                 }
-
-                else if (intakeIndexColors[1] == 2){
-
-                    if (!isRevolverTurnedYet){
-                        turnRevolverClockwise();
-                        //isRevolverTurnedYet = true;
-
-                    }
-
-                    else if (!isServoDownYet && isRevolverTurnedYet) {
-                        launchArtifact();
-                    }
-                    else if(isServoDownYet && isRevolverTurnedYet){
-                        resetLaunchVars();
-                    }
+                else{
+                    resetLaunchVars();
                 }
 
 
-                else if (intakeIndexColors[0] == 2){
-                    if (!isRevolverTurnedYet){
-                        turnRevolverCounterClockwise();
-                       // isRevolverTurnedYet = true;
+            }
 
-                    }
+            else if (intakeIndexColors[1] == 2){
 
-                    else if (!isServoDownYet && isRevolverTurnedYet) {
-                        launchArtifact();
-                    }
-                    else if (isServoDownYet && isRevolverTurnedYet){
-                        resetLaunchVars();
-                    }
+                if (!isRevolverTurnedYet){
+                    turnRevolverClockwise();
+                    //isRevolverTurnedYet = true;
 
                 }
+
+                else if (!isServoDownYet && isRevolverTurnedYet) {
+                    launchArtifact();
+                }
+                else if(isServoDownYet && isRevolverTurnedYet){
+                    resetLaunchVars();
+                }
+            }
+
+
+            else if (intakeIndexColors[0] == 2){
+                if (!isRevolverTurnedYet){
+                    turnRevolverCounterClockwise();
+                    // isRevolverTurnedYet = true;
+
+                }
+
+                else if (!isServoDownYet && isRevolverTurnedYet) {
+                    launchArtifact();
+                }
+                else if (isServoDownYet && isRevolverTurnedYet){
+                    resetLaunchVars();
+                }
+
+            }
 
 
         }
@@ -377,7 +377,7 @@ int launchedArtifacts = 0;
     public void launchMotif(int detected_id) {
 
         //int launchedArtifacts = 0;
-        //green purple purple
+        //purple purple green
         if (detected_id == 21) {
             launchMotifShell(0);
         }
@@ -392,7 +392,7 @@ int launchedArtifacts = 0;
 
         }
     }
-        //launches the motif
+    //launches the motif
 
 
     public void intakeMotif(){
@@ -408,43 +408,43 @@ int launchedArtifacts = 0;
         //  telemetry.addData("2",slot2);
         //  telemetry.addData("3",slot3);
         telemetry.addData("h",hsvValues[0]);
-          telemetry.addData("v",hsvValues[1]);
-          telemetry.addData("red",colors.red);
-          telemetry.addData("green",colors.green);
-           telemetry.addData("blue",colors.blue);
+        telemetry.addData("v",hsvValues[1]);
+        telemetry.addData("red",colors.red);
+        telemetry.addData("green",colors.green);
+        telemetry.addData("blue",colors.blue);
 
 
-                if (hsvValues[0] > PURPLELOWTHRESHOLDAUTO && hsvValues[0] < PURPLEHIGHTHRESHOLDAUTO) {
-                    telemetry.addData("purple", 2);
-                    intakeIndexColors[0] = 1;
-                    if (!isRevolverTurnedYet) {
-                        turnRevolverCounterClockwise();
-                    }
-                    else if(isRevolverTurnedYet) {
-                        resetLaunchVars();
-                    }
+        if (hsvValues[0] > PURPLELOWTHRESHOLDAUTO && hsvValues[0] < PURPLEHIGHTHRESHOLDAUTO) {
+            telemetry.addData("purple", 2);
+            intakeIndexColors[0] = 1;
+            if (!isRevolverTurnedYet) {
+                turnRevolverCounterClockwise();
+            }
+            else if(isRevolverTurnedYet) {
+                resetLaunchVars();
+            }
 
 
-                } else if (hsvValues[0] > GREENLOWTHRESHOLDAUTO && hsvValues[0] < GREENLOWTHRESHOLDAUTO) {
+        } else if (hsvValues[0] > GREENLOWTHRESHOLDAUTO && hsvValues[0] < GREENLOWTHRESHOLDAUTO) {
 
-                    telemetry.addData("green", 1);
-                    intakeIndexColors[0] = 2;
-                    if (!isRevolverTurnedYet) {
-                        turnRevolverCounterClockwise();
-                    }
-                    else if(isRevolverTurnedYet){
-                        resetLaunchVars();
+            telemetry.addData("green", 1);
+            intakeIndexColors[0] = 2;
+            if (!isRevolverTurnedYet) {
+                turnRevolverCounterClockwise();
+            }
+            else if(isRevolverTurnedYet){
+                resetLaunchVars();
 
-                    }
+            }
 
 
-                } else {
+        } else {
 
-                    telemetry.addData("no ball", 0);
-                  //  RGB.setPosition(0.3);
+            telemetry.addData("no ball", 0);
+            //  RGB.setPosition(0.3);
 
-                }
-/**/
+        }
+        /**/
         //set intake to run
 
     }
@@ -455,8 +455,8 @@ int launchedArtifacts = 0;
         if (result != null && result.isValid()) {
             LLResultTypes.FiducialResult fiducial = result.getFiducialResults().get(0);
 
-                id = fiducial.getFiducialId(); // The ID number of the fiducial
-                telemetry.addData("Fiducial: ", id);
+            id = fiducial.getFiducialId(); // The ID number of the fiducial
+            telemetry.addData("Fiducial: ", id);
 
 
 
@@ -491,108 +491,108 @@ int launchedArtifacts = 0;
     //manages state machine switches
     public void autonomousPathUpdate() {
 
-            //the state doesn't automatically wait for the path to finish
-            switch(pathState){
-                case 0:
-                    follower.followPath(scorePreload, true);
+        //the state doesn't automatically wait for the path to finish
+        switch(pathState){
+            case 0:
+                follower.followPath(scorePreload, true);
 
-                    setPathState(1);
-                    break;
-                case 1:
+                setPathState(1);
+                break;
+            case 1:
 
-                    //detects motif
-                    limelightDetectTag();
+                //detects motif
+                limelightDetectTag();
 
-                    if (!follower.isBusy() && id != 0) {
-                        follower.followPath(launchMotifPreload , true);
-                        //if this doesnt work set heading constraint to low number
-                        //follower.getCurrentPath().setLinearHeadingInterpolation(detectMotifPose.getHeading(), launchMotifPose.getHeading());
-                        setPathState(2);
+                if (!follower.isBusy() && id != 0) {
+                    follower.followPath(launchMotifPreload, true);
+                    //if this doesnt work set heading constraint to low number
+                    //follower.getCurrentPath().setLinearHeadingInterpolation(detectMotifPose.getHeading(), launchMotifPose.getHeading());
+                    setPathState(2);
+                }
+                break;
+
+
+            case 2:
+
+
+                if (!follower.isBusy()) {
+                    //launchMotif(id);
+                    launchMotif(id);
+                    if (isLaunchDoneYet) {
+                        resetLaunchVars();
+                        follower.followPath(prepareMotifOneIntake, true);
+                        setPathState(3);
                     }
-                    break;
+                }
 
+                break;
+            case 3:
 
-                case 2:
+                if (!follower.isBusy()) {
+                    follower.followPath(intakeMotifOne, true);
+                    follower.setMaxPower(0.15);
 
+                    setPathState(4);
+                }
+                break;
+            case 4:
 
-                    if (!follower.isBusy()) {
-                       //launchMotif(id);
-                        launchMotif(id);
-                      if (isLaunchDoneYet) {
-                            resetLaunchVars();
-                            follower.followPath(prepareMotifOneIntake, true);
-                            setPathState(3);
-                        }
+                intakeMotif();
+                if (!follower.isBusy()) {
+                    follower.followPath(launchMotifOne, true);
+                    follower.setMaxPower(1);
+                    setPathState(5);
+                }
+                break;
+
+            case 5:
+                if (!follower.isBusy()) {
+                    launchMotif(id);
+                    if (isLaunchDoneYet) {
+                        resetLaunchVars();
+                        follower.followPath(prepareMotifOneIntake, true);
+                        setPathState(6);
                     }
+                    //  setPathState(6);
+                }
+                break;
 
-                    break;
-                case 3:
 
-                    if (!follower.isBusy()) {
-                        follower.followPath(intakeMotifOne, true);
-                        follower.setMaxPower(0.15);
+            case 6:
 
-                        setPathState(4);
+                if (!follower.isBusy()) {
+                    follower.setMaxPower(0.15);
+
+                    follower.followPath(intakeMotifTwo, true);
+                    setPathState(7);
+                }
+                break;
+            case 7:
+
+
+                intakeMotif();
+                if (!follower.isBusy()) {
+                    follower.followPath(launchMotifTwo, true);
+
+                    setPathState(8);
+                    follower.setMaxPower(1);
+                }
+                break;
+            case 8:
+                if(!follower.isBusy()) {
+
+                    launchMotif(id);
+                    if (isLaunchDoneYet) {
+                        resetLaunchVars();
+
                     }
-                    break;
-                case 4:
-
-                    intakeMotif();
-                    if (!follower.isBusy()) {
-                        follower.followPath(launchMotifOne, true);
-                        follower.setMaxPower(1);
-                        setPathState(5);
-                    }
-                    break;
-
-                case 5:
-                    if (!follower.isBusy()) {
-                        launchMotif(id);
-                        if (isLaunchDoneYet) {
-                            resetLaunchVars();
-                            follower.followPath(prepareMotifOneIntake, true);
-                            setPathState(6);
-                        }
-                      //  setPathState(6);
-                    }
-                    break;
-
-
-                case 6:
-
-                    if (!follower.isBusy()) {
-                        follower.setMaxPower(0.15);
-
-                        follower.followPath(intakeMotifTwo, true);
-                        setPathState(7);
-                    }
-                    break;
-                case 7:
-
-
-                    intakeMotif();
-                    if (!follower.isBusy()) {
-                        follower.followPath(launchMotifTwo, true);
-
-                        setPathState(8);
-                        follower.setMaxPower(1);
-                    }
-                    break;
-                case 8:
-                    if(!follower.isBusy()) {
-
-                        launchMotif(id);
-                        if (isLaunchDoneYet) {
-                            resetLaunchVars();
-
-                        }
-                    }
-                    break;
+                }
+                break;
 
 
 
-            }
         }
+    }
     @Override
     public void init() {
 
@@ -610,7 +610,7 @@ int launchedArtifacts = 0;
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "launch_motor");
-       // launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launcherServo = hardwareMap.get(Servo.class, "launcher_servo");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         revolverMotor = hardwareMap.get(DcMotorEx.class, "revolver_motor");
@@ -624,9 +624,9 @@ int launchedArtifacts = 0;
         launchedArtifacts = 0;
         follower = Constants.createFollower(hardwareMap);
         colorSensor.setGain(3);
-revolverMotor.setTargetPosition(0);
-revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-revolverMotor.setPower(AUTOREVOLVERSPEED);
+        revolverMotor.setTargetPosition(0);
+        revolverMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        revolverMotor.setPower(AUTOREVOLVERSPEED);
         buildPaths();
         follower.setStartingPose(startPose);
 
@@ -643,18 +643,18 @@ revolverMotor.setPower(AUTOREVOLVERSPEED);
     @Override
 
     public void loop() {
-            //makes state machine run constantly
-            autonomousPathUpdate();
-            //detects if the robot is following the path
-            follower.update();
+        //makes state machine run constantly
+        autonomousPathUpdate();
+        //detects if the robot is following the path
+        follower.update();
 
-            //private final Pose startPose = new Pose(28.5, 128, Math.toRadians(90)); // Start Pose of our robot.
-            //private final Pose scorePose1 = new Pose(35.37, 119.3, Math.toRadians(145)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-            //private final Pose leaveLaunchLine = new Pose(53, 57.8, Math.toRadians(145));
-            telemetry.addData("path state", pathState);
-            telemetry.addData("x", follower.getPose().getX());
-            telemetry.addData("y", follower.getPose().getY());
-            telemetry.addData("heading", follower.getPose().getHeading());
+        //private final Pose startPose = new Pose(28.5, 128, Math.toRadians(90)); // Start Pose of our robot.
+        //private final Pose scorePose1 = new Pose(35.37, 119.3, Math.toRadians(145)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+        //private final Pose leaveLaunchLine = new Pose(53, 57.8, Math.toRadians(145));
+        telemetry.addData("path state", pathState);
+        telemetry.addData("x", follower.getPose().getX());
+        telemetry.addData("y", follower.getPose().getY());
+        telemetry.addData("heading", follower.getPose().getHeading());
         telemetry.addData("intakeArray 0:", intakeIndexColors[0]);
         telemetry.addData("intakeArray 1:", intakeIndexColors[1]);
         telemetry.addData("intakeArray 2:", intakeIndexColors[2]);
@@ -663,13 +663,13 @@ revolverMotor.setPower(AUTOREVOLVERSPEED);
         telemetry.update();
 
 
-        }
-        @Override
-        public void stop(){
-
-
-        }
     }
+    @Override
+    public void stop(){
+
+
+    }
+}
 
 
 
